@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RegionInfo, WorldConfig, WorldData, WorldLore } from '../types/world';
 import { DEFAULT_CONFIG } from '../types/world';
 import { generateRegionLore, generateWorldLore } from '../lib/gemini';
-import { generateWorld, randomSeed, stringToSeed } from '../lib/worldgen';
+import { generateWorld, parseSeed, randomSeed } from '../lib/worldgen';
 
 export function useWorldGenerator() {
   const [config, setConfig] = useState<WorldConfig>({ ...DEFAULT_CONFIG, seed: randomSeed() });
@@ -33,8 +33,7 @@ export function useWorldGenerator() {
   }, [regenerate]);
 
   const setSeed = useCallback((seedStr: string) => {
-    const seed = stringToSeed(seedStr) || parseInt(seedStr, 10) || randomSeed();
-    regenerate({ seed });
+    regenerate({ seed: parseSeed(seedStr) });
   }, [regenerate]);
 
   const updateConfig = useCallback((updates: Partial<WorldConfig>) => {
@@ -71,6 +70,12 @@ export function useWorldGenerator() {
   }, [world]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const seedParam = params.get('seed');
+    if (seedParam) {
+      regenerate({ seed: parseSeed(seedParam) });
+      return;
+    }
     regenerate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -165,3 +165,21 @@ export function stringToSeed(str: string): number {
   }
   return Math.abs(hash);
 }
+
+export function parseSeed(seedStr: string): number {
+  const trimmed = seedStr.trim();
+  if (!trimmed) return randomSeed();
+
+  const upper = trimmed.toUpperCase();
+  const fromBase36 = parseInt(upper, 36);
+  if (!isNaN(fromBase36) && fromBase36 >= 0 && seedToString(fromBase36) === upper) {
+    return fromBase36;
+  }
+
+  const fromDecimal = parseInt(trimmed, 10);
+  if (!isNaN(fromDecimal) && fromDecimal.toString() === trimmed) {
+    return fromDecimal;
+  }
+
+  return stringToSeed(trimmed);
+}
