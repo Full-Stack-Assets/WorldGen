@@ -357,6 +357,37 @@ body {
   padding: 0.35rem 0.75rem;
 }
 
+.btn-icon {
+  padding: 0.5rem;
+  min-width: 2.5rem;
+}
+
+.api-key-section {
+  margin-bottom: 0.85rem;
+}
+
+.api-key-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.api-key-row {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.api-key-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.api-key-status.active {
+  color: var(--success);
+}
+
 /* Map Section */
 .map-section {
   display: flex;

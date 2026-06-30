@@ -1,5 +1,6 @@
 import type { WorldConfig } from '../types/world';
 import { seedToString } from '../lib/worldgen';
+import { ApiKeyInput } from './ApiKeyInput';
 
 interface ControlPanelProps {
   config: WorldConfig;
@@ -98,6 +99,7 @@ export function ControlPanel({
 
       <div className="panel-section">
         <h3>AI Lore</h3>
+        <ApiKeyInput />
         <button
           className="btn btn-accent btn-full"
           onClick={onGenerateLore}
@@ -106,9 +108,6 @@ export function ControlPanel({
         >
           {loreLoading ? 'Generating...' : 'Generate World Lore'}
         </button>
-        <p className="hint">
-          Set <code>VITE_GEMINI_API_KEY</code> for AI-powered names and stories
-        </p>
       </div>
     </aside>
   );

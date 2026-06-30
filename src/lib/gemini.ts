@@ -1,14 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
 import type { Biome, RegionInfo, WorldData, WorldLore } from '../types/world';
 import { BIOME_LABELS } from './colors';
+import { getGeminiApiKey } from './apiKey';
 
-function getApiKey(): string | undefined {
-  return import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-}
-
-export function isAiAvailable(): boolean {
-  return Boolean(getApiKey());
-}
+export { isAiAvailable } from './apiKey';
 
 function buildRegionPrompt(region: RegionInfo, world: WorldData): string {
   return `You are a fantasy world-building assistant. Generate a short, evocative name and 2-sentence description for this region in a procedurally generated world.
@@ -49,7 +44,7 @@ Respond in JSON only, no markdown:
 }
 
 export async function generateRegionLore(region: RegionInfo, world: WorldData): Promise<Pick<RegionInfo, 'name' | 'description' | 'lore'>> {
-  const apiKey = getApiKey();
+  const apiKey = getGeminiApiKey();
   if (!apiKey) {
     return generateFallbackRegionLore(region);
   }
@@ -74,7 +69,7 @@ export async function generateRegionLore(region: RegionInfo, world: WorldData): 
 }
 
 export async function generateWorldLore(world: WorldData): Promise<WorldLore> {
-  const apiKey = getApiKey();
+  const apiKey = getGeminiApiKey();
   const sampleRegions = sampleNotableRegions(world);
 
   if (!apiKey) {
