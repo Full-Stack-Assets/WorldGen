@@ -22,7 +22,7 @@ export function ControlPanel({
   loreLoading,
 }: ControlPanelProps) {
   return (
-    <aside className="control-panel">
+    <div className="control-panel">
       <div className="panel-section">
         <h3>World Seed</h3>
         <div className="seed-row">
@@ -109,7 +109,7 @@ export function ControlPanel({
           {loreLoading ? 'Generating...' : 'Generate World Lore'}
         </button>
       </div>
-    </aside>
+    </div>
   );
 }
 

@@ -3,6 +3,7 @@ import type { RegionInfo, WorldConfig, WorldData, WorldLore } from '../types/wor
 import { DEFAULT_CONFIG } from '../types/world';
 import { generateRegionLore, generateWorldLore } from '../lib/gemini';
 import { generateWorld, parseSeed, randomSeed } from '../lib/worldgen';
+import { parseShareParams } from '../lib/share';
 
 function getInitialSeed(): number {
   const params = new URLSearchParams(window.location.search);
@@ -11,14 +12,16 @@ function getInitialSeed(): number {
   return randomSeed();
 }
 
-function getAdaptiveConfig(seed: number): WorldConfig {
+function getInitialConfig(): WorldConfig {
+  const seed = getInitialSeed();
+  const shared = parseShareParams();
   const isMobile = window.matchMedia('(max-width: 1100px)').matches;
-  const size = isMobile ? 128 : 256;
-  return { ...DEFAULT_CONFIG, seed, width: size, height: size };
+  const size = isMobile ? 128 : 192;
+  return { ...DEFAULT_CONFIG, seed, width: size, height: size, ...shared };
 }
 
 export function useWorldGenerator() {
-  const [config, setConfig] = useState<WorldConfig>(() => getAdaptiveConfig(getInitialSeed()));
+  const [config, setConfig] = useState<WorldConfig>(() => getInitialConfig());
   const [world, setWorld] = useState<WorldData | null>(null);
   const [generating, setGenerating] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState<RegionInfo | null>(null);

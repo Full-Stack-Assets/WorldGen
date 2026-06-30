@@ -1,20 +1,39 @@
 # WorldGen
 
-**Procedural worlds, infinite stories.**
+**Procedural 3D worlds with cinematic quality — infinite stories.**
 
-WorldGen is an interactive procedural world generator that creates unique terrain maps with diverse biomes, rivers, and climate systems. Click anywhere on the map to explore regions, and optionally power the experience with Gemini AI for rich world lore and naming.
+WorldGen transforms seeds into fully explorable 3D planets with terrain, oceans, settlements, rivers, lakes, and AI-powered lore. Built with Three.js for real-time rendering with sky, clouds, bloom, and atmospheric fog.
 
-![WorldGen](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
+**Live site:** [https://full-stack-assets.github.io/WorldGen/](https://full-stack-assets.github.io/WorldGen/)
 
 ## Features
 
-- **Procedural terrain** — Fractal noise-based elevation with configurable scale, octaves, and sea level
-- **13 biomes** — Oceans, beaches, forests, deserts, mountains, snow, volcanic regions, and more
-- **River carving** — Realistic river networks flow from highlands to the sea
-- **Interactive map** — Zoom, pan, and click to inspect any region
-- **Seed sharing** — Every world is reproducible from its seed
-- **PNG export** — Save your generated maps
-- **AI lore** *(optional)* — Gemini-powered world names, region descriptions, and hidden history
+### 3D Engine
+- Real-time 3D terrain mesh with vertex-colored biomes and elevation displacement
+- Cinematic sky, volumetric clouds, stars, and atmospheric fog
+- Reflective ocean plane with animated emissive water
+- Bloom, vignette, and chromatic aberration post-processing
+- Orbit camera with shadows and contact shadows
+- Glowing settlement markers (capitals, cities, towns, villages)
+- Animated selection rings on explored regions
+
+### World Generation
+- 8 world presets: Classic, Archipelago, Pangaea, Desert, Frozen, Volcanic, Eden, Alien
+- 15 biomes including lakes and rivers
+- Procedural settlements placed by suitability scoring
+- Seed-based reproducible worlds with shareable URLs
+
+### AI & Lore
+- Region exploration with names, descriptions, lore, and quest hooks
+- World Chronicle: mythology, factions, historical eras
+- Gemini API support with in-app key configuration
+- Rich fallback content when offline
+
+### UI
+- Fullscreen 3D viewport with glass-morphism HUD overlays
+- Atlas dashboard with biome distribution and settlement list
+- Biome Codex encyclopedia
+- Mobile-optimized collapsible panels
 
 ## Quick Start
 
@@ -23,50 +42,43 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to start generating worlds.
+Open [http://localhost:5173](http://localhost:5173)
 
-### AI Lore (Optional)
+### AI Lore
 
-Copy `.env.example` to `.env` and add your Gemini API key:
+Paste your Gemini API key in the **AI Lore** panel, or set `VITE_GEMINI_API_KEY` in `.env`.
 
-```bash
-cp .env.example .env
-# Edit .env and set VITE_GEMINI_API_KEY
-```
-
-Without an API key, WorldGen uses built-in fallback lore so the full experience still works.
+Get a free key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 
 ## Controls
 
 | Action | Input |
 |--------|-------|
-| Explore region | Click on the map |
-| Zoom | Scroll wheel |
-| Pan | Shift + drag (or Alt + drag) |
-| New world | Click **New** in the seed panel |
-| Export | Click **Export PNG** |
+| Orbit camera | Drag |
+| Zoom | Scroll / pinch |
+| Explore region | Click terrain |
+| Toggle panels | World / Region buttons |
 
-## Terrain Parameters
+## Share a World
 
-- **Scale** — Controls landmass size and detail
-- **Octaves** — Number of noise layers (more = finer detail)
-- **Sea Level** — How much of the world is ocean
-- **Persistence** — How much each octave contributes
-- **Moisture / Temperature** — Climate noise scales
+```
+https://full-stack-assets.github.io/WorldGen/?seed=7HD2P7
+```
 
 ## Tech Stack
 
-- React 19 + TypeScript
-- Vite
-- Custom Perlin noise engine
+- React 19 + TypeScript + Vite
+- Three.js + React Three Fiber + Drei
+- Postprocessing (bloom, vignette)
+- Custom Perlin noise procedural engine
 - Google Gemini API (optional)
 
-## Scripts
+## Deploy
+
+GitHub Pages deploys automatically on push to `main` via GitHub Actions.
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Production build
-npm run preview  # Preview production build
+npm run build
 ```
 
 ## License
