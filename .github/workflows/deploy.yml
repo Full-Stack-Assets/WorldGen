@@ -2,44 +2,59 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, cursor/worldgen-experience-0a14]
+    branches: [main]
   workflow_dispatch:
 
+# Required for GitHub Pages via Actions
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Prevent overlapping deploys from cancelling each other's build artifacts
 concurrency:
-  group: pages
+  group: pages-deploy
   cancel-in-progress: false
 
 jobs:
   build:
+    name: Build site
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - run: npm ci
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
         env:
           VITE_BASE: /WorldGen/
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Verify build output
+        run: test -f dist/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
+    name: Deploy to Pages
     needs: build
+    if: success()
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
