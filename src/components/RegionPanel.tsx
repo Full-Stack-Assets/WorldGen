@@ -10,18 +10,18 @@ interface RegionPanelProps {
 export function RegionPanel({ region, onClose }: RegionPanelProps) {
   if (!region) {
     return (
-      <aside className="region-panel region-panel-empty">
+      <div className="region-panel region-panel-empty">
         <div className="empty-state">
-          <div className="empty-icon">◎</div>
+          <div className="empty-icon">⬡</div>
           <h3>Explore the World</h3>
-          <p>Click anywhere on the map to discover regions, biomes, and hidden lore.</p>
+          <p>Click anywhere on the 3D terrain to discover regions, settlements, and hidden lore.</p>
         </div>
-      </aside>
+      </div>
     );
   }
 
   return (
-    <aside className="region-panel">
+    <div className="region-panel">
       <div className="region-header">
         <button className="btn-close" onClick={onClose} type="button" aria-label="Close">
           ×
@@ -47,9 +47,7 @@ export function RegionPanel({ region, onClose }: RegionPanelProps) {
 
       <div className="region-coords">
         <span>Coordinates</span>
-        <code>
-          ({region.x}, {region.y})
-        </code>
+        <code>({region.x}, {region.y})</code>
       </div>
 
       {!region.loading && region.description && (
@@ -61,9 +59,15 @@ export function RegionPanel({ region, onClose }: RegionPanelProps) {
               {region.lore}
             </blockquote>
           )}
+          {region.quest && (
+            <blockquote className="region-quest">
+              <span className="lore-label">Quest Hook</span>
+              {region.quest}
+            </blockquote>
+          )}
         </div>
       )}
-    </aside>
+    </div>
   );
 }
 

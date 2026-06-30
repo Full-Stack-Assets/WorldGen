@@ -12,7 +12,10 @@ export type Biome =
   | 'mountain'
   | 'volcanic'
   | 'swamp'
-  | 'river';
+  | 'river'
+  | 'lake';
+
+export type SettlementType = 'capital' | 'city' | 'town' | 'village' | 'outpost';
 
 export interface WorldConfig {
   seed: number;
@@ -35,13 +38,38 @@ export interface WorldCell {
   temperature: number;
   biome: Biome;
   isRiver: boolean;
+  isLake: boolean;
+}
+
+export interface Settlement {
+  x: number;
+  y: number;
+  name: string;
+  type: SettlementType;
+  population: number;
+  biome: Biome;
 }
 
 export interface WorldData {
   config: WorldConfig;
   cells: WorldCell[][];
   rivers: { x: number; y: number }[];
+  lakes: { x: number; y: number }[];
+  settlements: Settlement[];
   seed: number;
+}
+
+export interface WorldStats {
+  landPercent: number;
+  oceanPercent: number;
+  biomeCounts: Record<Biome, number>;
+  dominantBiome: Biome;
+  peakElevation: number;
+  avgTemperature: number;
+  avgMoisture: number;
+  riverTiles: number;
+  lakeTiles: number;
+  settlementCount: number;
 }
 
 export interface RegionInfo {
@@ -54,14 +82,39 @@ export interface RegionInfo {
   name?: string;
   description?: string;
   lore?: string;
+  quest?: string;
   loading?: boolean;
+}
+
+export interface Faction {
+  name: string;
+  motto: string;
+  description: string;
+  territory: string;
+}
+
+export interface WorldEra {
+  name: string;
+  years: string;
+  summary: string;
 }
 
 export interface WorldLore {
   worldName: string;
   tagline: string;
   history: string;
+  mythology: string;
+  factions: Faction[];
+  eras: WorldEra[];
   regions: { x: number; y: number; name: string; description: string }[];
+}
+
+export interface WorldPreset {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  config: Partial<WorldConfig>;
 }
 
 export const DEFAULT_CONFIG: WorldConfig = {
