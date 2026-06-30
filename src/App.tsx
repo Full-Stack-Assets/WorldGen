@@ -38,8 +38,8 @@ export default function App() {
         />
 
         <section className="map-section">
-          <div className={`map-container ${generating ? 'generating' : ''}`}>
-            {generating && <div className="generating-overlay">Generating world...</div>}
+          <div className="map-container">
+            {generating && !world && <div className="generating-overlay">Generating world...</div>}
             <WorldCanvas
               world={world}
               onSelectRegion={selectRegion}

@@ -4,29 +4,45 @@ import { DEFAULT_CONFIG } from '../types/world';
 import { generateRegionLore, generateWorldLore } from '../lib/gemini';
 import { generateWorld, parseSeed, randomSeed } from '../lib/worldgen';
 
+function getInitialSeed(): number {
+  const params = new URLSearchParams(window.location.search);
+  const seedParam = params.get('seed');
+  if (seedParam) return parseSeed(seedParam);
+  return randomSeed();
+}
+
+function getAdaptiveConfig(seed: number): WorldConfig {
+  const isMobile = window.matchMedia('(max-width: 1100px)').matches;
+  const size = isMobile ? 128 : 256;
+  return { ...DEFAULT_CONFIG, seed, width: size, height: size };
+}
+
 export function useWorldGenerator() {
-  const [config, setConfig] = useState<WorldConfig>({ ...DEFAULT_CONFIG, seed: randomSeed() });
+  const [config, setConfig] = useState<WorldConfig>(() => getAdaptiveConfig(getInitialSeed()));
   const [world, setWorld] = useState<WorldData | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [generating, setGenerating] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState<RegionInfo | null>(null);
   const [worldLore, setWorldLore] = useState<WorldLore | null>(null);
   const [loreLoading, setLoreLoading] = useState(false);
-  const workerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const configRef = useRef(config);
+  configRef.current = config;
 
   const regenerate = useCallback((overrides?: Partial<WorldConfig>) => {
-    setGenerating(true);
-    const newConfig = { ...config, ...overrides };
+    const newConfig = { ...configRef.current, ...overrides };
     setConfig(newConfig);
+    setGenerating(true);
 
-    if (workerRef.current) clearTimeout(workerRef.current);
-    workerRef.current = setTimeout(() => {
-      const data = generateWorld(newConfig);
-      setWorld(data);
-      setSelectedRegion(null);
-      setWorldLore(null);
-      setGenerating(false);
-    }, 16);
-  }, [config]);
+    requestAnimationFrame(() => {
+      try {
+        const data = generateWorld(newConfig);
+        setWorld(data);
+        setSelectedRegion(null);
+        setWorldLore(null);
+      } finally {
+        setGenerating(false);
+      }
+    });
+  }, []);
 
   const newSeed = useCallback(() => {
     regenerate({ seed: randomSeed() });
@@ -41,8 +57,9 @@ export function useWorldGenerator() {
   }, [regenerate]);
 
   const selectRegion = useCallback(async (x: number, y: number) => {
-    if (!world) return;
-    const cell = world.cells[y]?.[x];
+    const currentWorld = world;
+    if (!currentWorld) return;
+    const cell = currentWorld.cells[y]?.[x];
     if (!cell) return;
 
     const region: RegionInfo = {
@@ -57,7 +74,7 @@ export function useWorldGenerator() {
 
     setSelectedRegion(region);
 
-    const lore = await generateRegionLore(region, world);
+    const lore = await generateRegionLore(region, currentWorld);
     setSelectedRegion({ ...region, ...lore, loading: false });
   }, [world]);
 
@@ -70,15 +87,8 @@ export function useWorldGenerator() {
   }, [world]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const seedParam = params.get('seed');
-    if (seedParam) {
-      regenerate({ seed: parseSeed(seedParam) });
-      return;
-    }
     regenerate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [regenerate]);
 
   return {
     config,
