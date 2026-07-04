@@ -8,8 +8,11 @@ import { WorldChronicle } from './components/WorldChronicle';
 import { PresetGallery } from './components/PresetGallery';
 import { SharePanel } from './components/SharePanel';
 import { BiomeCodex } from './components/BiomeCodex';
+import { TimeControl } from './components/TimeControl';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
+import { useDayNightCycle } from './hooks/useDayNightCycle';
 import { computeWorldStats } from './lib/stats';
+import { deriveWeather } from './lib/weather';
 import './styles/index.css';
 
 export default function App() {
@@ -28,12 +31,15 @@ export default function App() {
     clearSelection,
   } = useWorldGenerator();
 
+  const { timeOfDay, autoPlay, setManualTime, toggleAutoPlay } = useDayNightCycle();
+
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [showCodex, setShowCodex] = useState(false);
   const [activeTab, setActiveTab] = useState<'controls' | 'atlas' | 'chronicle'>('controls');
 
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
+  const weather = useMemo(() => (stats ? deriveWeather(stats) : 'clear' as const), [stats]);
 
   return (
     <div className="app-3d">
@@ -41,6 +47,8 @@ export default function App() {
         world={world}
         selectedX={selectedRegion?.x}
         selectedY={selectedRegion?.y}
+        timeOfDay={timeOfDay}
+        weather={weather}
         onSelectRegion={selectRegion}
       />
 
@@ -57,6 +65,12 @@ export default function App() {
           <button className="hud-btn" type="button" onClick={() => setShowCodex(true)}>
             Codex
           </button>
+          <TimeControl
+            timeOfDay={timeOfDay}
+            autoPlay={autoPlay}
+            onScrub={setManualTime}
+            onToggleAutoPlay={toggleAutoPlay}
+          />
         </div>
 
         {leftOpen && (
