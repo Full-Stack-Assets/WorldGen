@@ -1,20 +1,29 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { WorldData } from '../../types/world';
-import { buildTerrainGeometry, gridToWorldPosition } from '../../lib/terrainMesh';
+import type { Settlement, SettlementType, WorldData } from '../../types/world';
+import { gridToWorldPosition, type TerrainBuildResult } from '../../lib/terrainMesh';
 import { SETTLEMENT_COLORS } from '../../lib/colors';
+
+const SETTLEMENT_BUILDING_COUNTS: Record<SettlementType, number> = {
+  capital: 8, city: 5, town: 3, village: 2, outpost: 1,
+};
+
+function hash2(x: number, y: number): number {
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
 
 interface Terrain3DProps {
   world: WorldData;
+  terrain: TerrainBuildResult;
   selectedX?: number;
   selectedY?: number;
   onSelect: (x: number, y: number) => void;
 }
 
-export function Terrain3D({ world, selectedX, selectedY, onSelect }: Terrain3DProps) {
+export function Terrain3D({ world, terrain, selectedX, selectedY, onSelect }: Terrain3DProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const terrain = useMemo(() => buildTerrainGeometry(world), [world]);
 
   const selectionPos = useMemo(() => {
     if (selectedX === undefined || selectedY === undefined) return null;
@@ -66,15 +75,12 @@ export function Terrain3D({ world, selectedX, selectedY, onSelect }: Terrain3DPr
 
         return (
           <group key={`${s.x}-${s.y}`} position={pos}>
-            <mesh castShadow>
-              <cylinderGeometry args={[0.35 * scale, 0.5 * scale, 1.8 * scale, 6]} />
-              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} metalness={0.6} roughness={0.3} />
-            </mesh>
-            <mesh position={[0, 1.8 * scale + 0.3, 0]}>
-              <sphereGeometry args={[0.25 * scale, 8, 8]} />
+            <SettlementModel settlement={s} scale={scale} color={color} />
+            <mesh position={[0, 1.5 * scale + 0.35, 0]}>
+              <sphereGeometry args={[0.16 * scale, 8, 8]} />
               <meshStandardMaterial color="#fffef0" emissive="#fffef0" emissiveIntensity={0.8} />
             </mesh>
-            <pointLight intensity={0.4} distance={8} color={color} />
+            <pointLight intensity={0.35} distance={9} color={color} />
           </group>
         );
       })}
@@ -82,6 +88,53 @@ export function Terrain3D({ world, selectedX, selectedY, onSelect }: Terrain3DPr
       {selectionPos && (
         <SelectionRing position={selectionPos} />
       )}
+    </group>
+  );
+}
+
+interface Building {
+  x: number;
+  z: number;
+  w: number;
+  h: number;
+  d: number;
+  rot: number;
+}
+
+function SettlementModel({ settlement, scale, color }: { settlement: Settlement; scale: number; color: string }) {
+  const count = SETTLEMENT_BUILDING_COUNTS[settlement.type];
+
+  const buildings = useMemo<Building[]>(() => {
+    const list: Building[] = [];
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + hash2(settlement.x, settlement.y + i) * 1.4;
+      const radius = count > 1 ? (0.55 + hash2(settlement.x + i, settlement.y) * 0.35) * scale * 1.6 : 0;
+      list.push({
+        x: Math.cos(angle) * radius,
+        z: Math.sin(angle) * radius,
+        w: (0.45 + hash2(settlement.x, settlement.y * 3 + i) * 0.25) * scale,
+        h: (0.6 + hash2(settlement.x * 5 + i, settlement.y) * 0.5) * scale,
+        d: (0.45 + hash2(settlement.x * 2 + i, settlement.y + 1) * 0.25) * scale,
+        rot: angle,
+      });
+    }
+    return list;
+  }, [settlement.x, settlement.y, count, scale]);
+
+  return (
+    <group>
+      {buildings.map((b, i) => (
+        <group key={i} position={[b.x, 0, b.z]} rotation={[0, b.rot, 0]}>
+          <mesh position={[0, b.h / 2, 0]} castShadow receiveShadow>
+            <boxGeometry args={[b.w, b.h, b.d]} />
+            <meshStandardMaterial color="#c9b79c" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, b.h + b.w * 0.35, 0]} castShadow>
+            <coneGeometry args={[b.w * 0.8, b.w * 0.7, 4]} />
+            <meshStandardMaterial color={color} roughness={0.6} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }

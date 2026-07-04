@@ -78,6 +78,24 @@ export function worldPointToGrid(
   };
 }
 
+function surfaceHeight(elevation: number, seaLevel: number): number {
+  return Math.max(0.5, (elevation - seaLevel) * HEIGHT_SCALE);
+}
+
+function gridToPlane(
+  x: number,
+  y: number,
+  terrainSize: number,
+  gridWidth: number,
+  gridHeight: number,
+): { wx: number; wz: number } {
+  return {
+    wx: (x / (gridWidth - 1) - 0.5) * terrainSize,
+    wz: (y / (gridHeight - 1) - 0.5) * terrainSize,
+  };
+}
+
+// Floats 1.5 units above the terrain surface — for markers/rings meant to hover clear of the mesh.
 export function gridToWorldPosition(
   x: number,
   y: number,
@@ -87,8 +105,20 @@ export function gridToWorldPosition(
   gridWidth: number,
   gridHeight: number,
 ): THREE.Vector3 {
-  const wx = (x / (gridWidth - 1) - 0.5) * terrainSize;
-  const wz = (y / (gridHeight - 1) - 0.5) * terrainSize;
-  const wy = Math.max(0.5, (elevation - seaLevel) * HEIGHT_SCALE) + 1.5;
-  return new THREE.Vector3(wx, wy, wz);
+  const { wx, wz } = gridToPlane(x, y, terrainSize, gridWidth, gridHeight);
+  return new THREE.Vector3(wx, surfaceHeight(elevation, seaLevel) + 1.5, wz);
+}
+
+// Sits directly on the terrain surface — for props (vegetation, rocks) that should rest on the ground.
+export function gridToGroundPosition(
+  x: number,
+  y: number,
+  elevation: number,
+  seaLevel: number,
+  terrainSize: number,
+  gridWidth: number,
+  gridHeight: number,
+): THREE.Vector3 {
+  const { wx, wz } = gridToPlane(x, y, terrainSize, gridWidth, gridHeight);
+  return new THREE.Vector3(wx, surfaceHeight(elevation, seaLevel), wz);
 }

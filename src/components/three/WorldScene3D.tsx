@@ -1,16 +1,23 @@
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sky, Cloud, Stars, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import type { WorldData } from '../../types/world';
+import type { WeatherKind } from '../../lib/weather';
+import { computeDayNight } from '../../lib/daynight';
+import { buildTerrainGeometry, HEIGHT_SCALE } from '../../lib/terrainMesh';
 import { Terrain3D } from './Terrain3D';
+import { Vegetation3D } from './Vegetation3D';
 import { Water3D } from './Water3D';
+import { Weather3D } from './Weather3D';
 
 interface WorldScene3DProps {
   world: WorldData | null;
   selectedX?: number;
   selectedY?: number;
+  timeOfDay: number;
+  weather: WeatherKind;
   onSelectRegion: (x: number, y: number) => void;
 }
 
@@ -18,37 +25,44 @@ function SceneContent({
   world,
   selectedX,
   selectedY,
+  timeOfDay,
+  weather,
   onSelectRegion,
 }: {
   world: WorldData;
   selectedX?: number;
   selectedY?: number;
+  timeOfDay: number;
+  weather: WeatherKind;
   onSelectRegion: (x: number, y: number) => void;
 }) {
+  const terrain = useMemo(() => buildTerrainGeometry(world), [world]);
+  const dayNight = useMemo(() => computeDayNight(timeOfDay), [timeOfDay]);
+
   return (
     <>
-      <color attach="background" args={['#060a14']} />
-      <fog attach="fog" args={['#0a1628', 80, 320]} />
+      <color attach="background" args={[dayNight.backgroundColor]} />
+      <fog attach="fog" args={[dayNight.fogColor, 80, 320]} />
 
       <Sky
         distance={450000}
-        sunPosition={[80, 30, 60]}
-        inclination={0.52}
-        azimuth={0.22}
+        sunPosition={dayNight.sunPosition}
         mieCoefficient={0.005}
         mieDirectionalG={0.9}
         rayleigh={0.4}
         turbidity={8}
       />
 
-      <Stars radius={300} depth={80} count={4000} factor={3} saturation={0.2} fade speed={0.3} />
+      <group visible={dayNight.starsVisible}>
+        <Stars radius={300} depth={80} count={4000} factor={3} saturation={0.2} fade speed={0.3} />
+      </group>
 
-      <ambientLight intensity={0.25} color="#8eb4d4" />
-      <hemisphereLight args={['#87ceeb', '#2d4a2d', 0.45]} />
+      <ambientLight intensity={dayNight.ambientIntensity} color="#8eb4d4" />
+      <hemisphereLight args={['#87ceeb', '#2d4a2d', dayNight.hemiIntensity]} />
       <directionalLight
-        position={[80, 60, 40]}
-        intensity={1.8}
-        color="#fff5e6"
+        position={dayNight.sunPosition}
+        intensity={dayNight.sunIntensity}
+        color={dayNight.sunColor}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-far={300}
@@ -58,7 +72,7 @@ function SceneContent({
         shadow-camera-bottom={-120}
         shadow-bias={-0.0005}
       />
-      <directionalLight position={[-40, 20, -30]} intensity={0.3} color="#6b8cce" />
+      <directionalLight position={[-40, 20, -30]} intensity={dayNight.moonIntensity} color="#6b8cce" />
 
       <Cloud position={[-40, 45, -30]} opacity={0.35} speed={0.15} bounds={[20, 4, 20]} segments={20} color="#c8d8e8" />
       <Cloud position={[50, 55, 20]} opacity={0.28} speed={0.1} bounds={[25, 5, 25]} segments={20} color="#d0dce8" />
@@ -67,9 +81,23 @@ function SceneContent({
       <Water3D />
       <Terrain3D
         world={world}
+        terrain={terrain}
         selectedX={selectedX}
         selectedY={selectedY}
         onSelect={onSelectRegion}
+      />
+      <Vegetation3D
+        world={world}
+        terrainSize={terrain.terrainSize}
+        seaLevel={terrain.seaLevel}
+        gridWidth={terrain.gridWidth}
+        gridHeight={terrain.gridHeight}
+      />
+      <Weather3D
+        kind={weather}
+        areaSize={terrain.terrainSize * 1.2}
+        topY={HEIGHT_SCALE * 1.6}
+        bottomY={-2}
       />
 
       <ContactShadows
@@ -110,7 +138,7 @@ function SceneContent({
   );
 }
 
-export function WorldScene3D({ world, selectedX, selectedY, onSelectRegion }: WorldScene3DProps) {
+export function WorldScene3D({ world, selectedX, selectedY, timeOfDay, weather, onSelectRegion }: WorldScene3DProps) {
   return (
     <div className="world-scene-3d">
       <Canvas
@@ -125,6 +153,8 @@ export function WorldScene3D({ world, selectedX, selectedY, onSelectRegion }: Wo
               world={world}
               selectedX={selectedX}
               selectedY={selectedY}
+              timeOfDay={timeOfDay}
+              weather={weather}
               onSelectRegion={onSelectRegion}
             />
           )}

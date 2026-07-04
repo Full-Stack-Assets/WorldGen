@@ -230,6 +230,45 @@ body {
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
+.time-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.6rem;
+  backdrop-filter: blur(12px);
+}
+
+.time-slider {
+  width: 110px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+.time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  cursor: pointer;
+}
+
+.time-readout {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 2.6rem;
+  text-align: right;
+}
+
 .hud-panel {
   pointer-events: auto;
   margin: 0 0.75rem 0.75rem;
