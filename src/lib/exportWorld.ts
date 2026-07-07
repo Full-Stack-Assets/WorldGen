@@ -1,7 +1,7 @@
 import type { WorldData } from '../types/world';
 import { seedToString } from './worldgen';
 
-function triggerDownload(href: string, filename: string): void {
+export function triggerDownload(href: string, filename: string): void {
   const a = document.createElement('a');
   a.href = href;
   a.download = filename;

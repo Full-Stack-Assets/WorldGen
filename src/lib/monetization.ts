@@ -9,7 +9,6 @@ export interface SupportLink {
 
 export interface MonetizationConfig {
   supportLinks: SupportLink[];
-  proProductUrl?: string;
   adsense?: { client: string; slot: string };
 }
 
@@ -37,7 +36,6 @@ export function getMonetizationConfig(): MonetizationConfig {
 
   return {
     supportLinks,
-    proProductUrl: cleanUrl(env.VITE_PRO_PRODUCT_URL),
     adsense: client && slot ? { client, slot } : undefined,
   };
 }

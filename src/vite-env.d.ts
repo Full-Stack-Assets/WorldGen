@@ -6,8 +6,10 @@ interface ImportMetaEnv {
   readonly VITE_SUPPORT_GITHUB_SPONSORS?: string;
   readonly VITE_SUPPORT_PATREON?: string;
   readonly VITE_PRO_PRODUCT_URL?: string;
+  readonly VITE_GUMROAD_PRODUCT_ID?: string;
   readonly VITE_ADSENSE_CLIENT?: string;
   readonly VITE_ADSENSE_SLOT?: string;
+  readonly VITE_AFFILIATE_ENABLED?: string;
 }
 
 interface ImportMeta {

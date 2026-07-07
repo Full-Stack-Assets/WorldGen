@@ -8,12 +8,15 @@ import { WorldChronicle } from './components/WorldChronicle';
 import { PresetGallery } from './components/PresetGallery';
 import { SharePanel } from './components/SharePanel';
 import { ExportPanel } from './components/ExportPanel';
+import { ProPanel } from './components/ProPanel';
 import { SupportPanel } from './components/SupportPanel';
+import { AffiliatePanel } from './components/AffiliatePanel';
 import { AdBanner } from './components/AdBanner';
 import { BiomeCodex } from './components/BiomeCodex';
 import { TimeControl } from './components/TimeControl';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
 import { useDayNightCycle } from './hooks/useDayNightCycle';
+import { useProStatus } from './hooks/useProStatus';
 import { computeWorldStats } from './lib/stats';
 import { deriveWeather } from './lib/weather';
 import './styles/index.css';
@@ -35,6 +38,7 @@ export default function App() {
   } = useWorldGenerator();
 
   const { timeOfDay, autoPlay, setManualTime, toggleAutoPlay } = useDayNightCycle();
+  const isPro = useProStatus();
 
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
@@ -113,6 +117,7 @@ export default function App() {
                   <ControlPanel
                     config={config}
                     generating={generating}
+                    isPro={isPro}
                     onNewSeed={newSeed}
                     onSetSeed={setSeed}
                     onUpdateConfig={updateConfig}
@@ -121,7 +126,9 @@ export default function App() {
                   />
                   <SharePanel config={config} />
                   <ExportPanel world={world} />
+                  <ProPanel />
                   <SupportPanel />
+                  <AffiliatePanel />
                   <AdBanner />
                 </>
               )}

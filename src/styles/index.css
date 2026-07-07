@@ -300,6 +300,97 @@ body {
   margin-bottom: 0.25rem;
 }
 
+/* ─── Pro tier ─── */
+.pro-panel .pro-features {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pro-panel .pro-features li {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.pro-panel .pro-features li::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.pro-buy-btn { text-align: center; text-decoration: none; margin-bottom: 0.6rem; }
+
+.pro-key-row { display: flex; gap: 0.4rem; }
+
+.pro-msg { font-size: 0.72rem; margin-top: 0.4rem; }
+.pro-msg.ok { color: #6ee7a8; }
+.pro-msg.err { color: #f4a4a4; }
+
+.pro-active .hint { color: #6ee7a8; }
+
+.pro-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.02rem 0.3rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #0b1020;
+  vertical-align: middle;
+}
+
+.export-premium { margin-top: 0.4rem; }
+
+/* ─── Detail selector ─── */
+.detail-row { display: flex; gap: 0.4rem; }
+
+.detail-btn {
+  flex: 1;
+  padding: 0.4rem 0.3rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.detail-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text-primary); }
+.detail-btn.active { border-color: var(--accent); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.detail-btn:disabled { cursor: default; opacity: 0.7; }
+
+/* ─── Affiliate panel ─── */
+.affiliate-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.affiliate-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.affiliate-card:hover { border-color: var(--accent); }
+.affiliate-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
+.affiliate-desc { font-size: 0.7rem; color: var(--text-muted); }
+.affiliate-disclosure { font-style: italic; }
+
 .hud-panel {
   pointer-events: auto;
   margin: 0 0.75rem 0.75rem;

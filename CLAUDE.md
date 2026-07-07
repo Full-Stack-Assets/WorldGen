@@ -37,7 +37,7 @@ Data flows one way: **config → pure generation → WorldData → rendering/UI*
 
 6. **HUD/UI — `src/components/*.tsx` + `src/styles/index.css`**: 2D panels overlaid on the fullscreen canvas (`App.tsx` composes them). Styling is a single plain-CSS file with glass-morphism panel classes; no CSS framework.
 
-7. **Monetization — `src/lib/monetization.ts` + `SupportPanel`/`AdBanner`**: every channel (donation links, Pro checkout URL, AdSense) is gated behind `VITE_*` env vars read at build time. With nothing configured, no monetization UI renders and no third-party scripts load — keep it that way when adding channels.
+7. **Monetization — `src/lib/monetization.ts`, `src/lib/pro.ts`, `src/lib/affiliates.ts`**: every channel (donations, AdSense, Pro tier, affiliates) is gated behind `VITE_*` env vars read at build time. With nothing configured, no monetization UI renders and no third-party scripts load — keep it that way when adding channels. **Pro** (`pro.ts` + `useProStatus`) is a license-gated tier verified client-side against Gumroad's license API, persisted in localStorage, broadcast via a `worldgen-pro-change` event / `useSyncExternalStore`. Pro gates are strictly additive (ad-free, High/Ultra grid sizes, heightmap/biome-map PNG exports) — never degrade the free tier to upsell.
 
 ## Conventions
 
