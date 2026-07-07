@@ -44,6 +44,15 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173)
 
+## Development
+
+```bash
+npm test        # run the Vitest suite
+npm run build   # type-check + production build
+```
+
+World generation runs in a **Web Worker** (`src/lib/worldgen.worker.ts`) so large grids never block the UI, with an automatic synchronous fallback. The core generation/config logic is covered by Vitest tests (`src/**/*.test.ts`), and CI type-checks, tests, and builds every PR.
+
 ### AI Lore
 
 Paste your Gemini API key in the **AI Lore** panel, or set `VITE_GEMINI_API_KEY` in `.env`.

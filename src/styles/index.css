@@ -391,6 +391,44 @@ body {
 .affiliate-desc { font-size: 0.7rem; color: var(--text-muted); }
 .affiliate-disclosure { font-style: italic; }
 
+/* ─── Error boundary ─── */
+.error-boundary {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 5;
+  /* Let clicks reach the HUD; only the card itself is interactive. */
+  pointer-events: none;
+}
+
+.error-boundary-card {
+  max-width: 440px;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.error-boundary-card h2 { font-size: 1.05rem; margin-bottom: 0.5rem; }
+.error-boundary-card p { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+
+.error-boundary-detail {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.error-boundary-actions { display: flex; gap: 0.5rem; justify-content: center; }
+
 .hud-panel {
   pointer-events: auto;
   margin: 0 0.75rem 0.75rem;

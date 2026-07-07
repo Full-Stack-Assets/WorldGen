@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { WorldScene3D } from './components/three/WorldScene3D';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ControlPanel } from './components/ControlPanel';
 import { RegionPanel } from './components/RegionPanel';
 import { WorldHeader } from './components/WorldHeader';
@@ -50,14 +51,16 @@ export default function App() {
 
   return (
     <div className="app-3d">
-      <WorldScene3D
-        world={world}
-        selectedX={selectedRegion?.x}
-        selectedY={selectedRegion?.y}
-        timeOfDay={timeOfDay}
-        weather={weather}
-        onSelectRegion={selectRegion}
-      />
+      <ErrorBoundary fallbackTitle="3D rendering failed">
+        <WorldScene3D
+          world={world}
+          selectedX={selectedRegion?.x}
+          selectedY={selectedRegion?.y}
+          timeOfDay={timeOfDay}
+          weather={weather}
+          onSelectRegion={selectRegion}
+        />
+      </ErrorBoundary>
 
       <div className="hud-overlay">
         <WorldHeader worldLore={worldLore} seed={config.seed} generating={generating} />

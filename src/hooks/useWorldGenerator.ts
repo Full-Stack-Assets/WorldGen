@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RegionInfo, WorldConfig, WorldData, WorldLore } from '../types/world';
 import { DEFAULT_CONFIG } from '../types/world';
 import { generateRegionLore, generateWorldLore } from '../lib/gemini';
-import { generateWorld, parseSeed, randomSeed } from '../lib/worldgen';
+import { parseSeed, randomSeed } from '../lib/worldgen';
+import { generateWorldAsync } from '../lib/worldGenService';
 import { parseShareParams } from '../lib/share';
 
 function getInitialSeed(): number {
@@ -29,21 +30,22 @@ export function useWorldGenerator() {
   const [loreLoading, setLoreLoading] = useState(false);
   const configRef = useRef(config);
   configRef.current = config;
+  // Monotonic token: only the most recent regenerate() result is applied, so
+  // rapid config changes can't race a slow (worker) result onto a newer world.
+  const requestRef = useRef(0);
 
   const regenerate = useCallback((overrides?: Partial<WorldConfig>) => {
     const newConfig = { ...configRef.current, ...overrides };
     setConfig(newConfig);
     setGenerating(true);
 
-    requestAnimationFrame(() => {
-      try {
-        const data = generateWorld(newConfig);
-        setWorld(data);
-        setSelectedRegion(null);
-        setWorldLore(null);
-      } finally {
-        setGenerating(false);
-      }
+    const token = ++requestRef.current;
+    generateWorldAsync(newConfig).then((data) => {
+      if (token !== requestRef.current) return; // superseded by a newer request
+      setWorld(data);
+      setSelectedRegion(null);
+      setWorldLore(null);
+      setGenerating(false);
     });
   }, []);
 

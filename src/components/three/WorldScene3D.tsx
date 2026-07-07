@@ -1,6 +1,6 @@
 import { Suspense, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Sky, Cloud, Stars, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Sky, Stars, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import type { WorldData } from '../../types/world';
@@ -11,6 +11,7 @@ import { Terrain3D } from './Terrain3D';
 import { Vegetation3D } from './Vegetation3D';
 import { Water3D } from './Water3D';
 import { Weather3D } from './Weather3D';
+import { ProceduralClouds } from './ProceduralClouds';
 
 interface WorldScene3DProps {
   world: WorldData | null;
@@ -74,9 +75,7 @@ function SceneContent({
       />
       <directionalLight position={[-40, 20, -30]} intensity={dayNight.moonIntensity} color="#6b8cce" />
 
-      <Cloud position={[-40, 45, -30]} opacity={0.35} speed={0.15} bounds={[20, 4, 20]} segments={20} color="#c8d8e8" />
-      <Cloud position={[50, 55, 20]} opacity={0.28} speed={0.1} bounds={[25, 5, 25]} segments={20} color="#d0dce8" />
-      <Cloud position={[0, 60, -50]} opacity={0.22} speed={0.08} bounds={[30, 4, 30]} segments={15} color="#b8c8d8" />
+      <ProceduralClouds />
 
       <Water3D />
       <Terrain3D
