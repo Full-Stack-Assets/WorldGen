@@ -37,6 +37,8 @@ Data flows one way: **config → pure generation → WorldData → rendering/UI*
 
 6. **HUD/UI — `src/components/*.tsx` + `src/styles/index.css`**: 2D panels overlaid on the fullscreen canvas (`App.tsx` composes them). Styling is a single plain-CSS file with glass-morphism panel classes; no CSS framework.
 
+7. **Monetization — `src/lib/monetization.ts` + `SupportPanel`/`AdBanner`**: every channel (donation links, Pro checkout URL, AdSense) is gated behind `VITE_*` env vars read at build time. With nothing configured, no monetization UI renders and no third-party scripts load — keep it that way when adding channels.
+
 ## Conventions
 
 - **Seeds are the contract.** Worlds must be reproducible: same seed + config → identical world. Seeds display as base36 strings (`seedToString`/`parseSeed` round-trip); share URLs encode `seed`, `scale`, `sea`, `oct` (`src/lib/share.ts`). Don't use `Math.random()` inside generation — use `createRng(seed + offset)` from `src/lib/noise.ts`.

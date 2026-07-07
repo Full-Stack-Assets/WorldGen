@@ -145,7 +145,7 @@ export function WorldScene3D({ world, selectedX, selectedY, timeOfDay, weather, 
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 70, 90], fov: 45, near: 0.5, far: 500 }}
-        gl={{ antialias: true, toneMappingExposure: 1.15 }}
+        gl={{ antialias: true, toneMappingExposure: 1.15, preserveDrawingBuffer: true }}
       >
         <Suspense fallback={null}>
           {world && (

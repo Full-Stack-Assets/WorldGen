@@ -7,6 +7,9 @@ import { WorldDashboard } from './components/WorldDashboard';
 import { WorldChronicle } from './components/WorldChronicle';
 import { PresetGallery } from './components/PresetGallery';
 import { SharePanel } from './components/SharePanel';
+import { ExportPanel } from './components/ExportPanel';
+import { SupportPanel } from './components/SupportPanel';
+import { AdBanner } from './components/AdBanner';
 import { BiomeCodex } from './components/BiomeCodex';
 import { TimeControl } from './components/TimeControl';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
@@ -56,13 +59,25 @@ export default function App() {
         <WorldHeader worldLore={worldLore} seed={config.seed} generating={generating} />
 
         <div className="hud-toolbar">
-          <button className="hud-btn" type="button" onClick={() => setLeftOpen((o) => !o)}>
+          <button
+            className="hud-btn"
+            type="button"
+            aria-label={leftOpen ? 'Hide world panel' : 'Show world panel'}
+            aria-pressed={leftOpen}
+            onClick={() => setLeftOpen((o) => !o)}
+          >
             {leftOpen ? '◧' : '◨'} World
           </button>
-          <button className="hud-btn" type="button" onClick={() => setRightOpen((o) => !o)}>
+          <button
+            className="hud-btn"
+            type="button"
+            aria-label={rightOpen ? 'Hide region panel' : 'Show region panel'}
+            aria-pressed={rightOpen}
+            onClick={() => setRightOpen((o) => !o)}
+          >
             {rightOpen ? '◨' : '◧'} Region
           </button>
-          <button className="hud-btn" type="button" onClick={() => setShowCodex(true)}>
+          <button className="hud-btn" type="button" aria-label="Open biome codex" onClick={() => setShowCodex(true)}>
             Codex
           </button>
           <TimeControl
@@ -105,6 +120,9 @@ export default function App() {
                     loreLoading={loreLoading}
                   />
                   <SharePanel config={config} />
+                  <ExportPanel world={world} />
+                  <SupportPanel />
+                  <AdBanner />
                 </>
               )}
               {activeTab === 'atlas' && stats && world && (

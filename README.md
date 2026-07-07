@@ -65,6 +65,25 @@ Get a free key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 https://full-stack-assets.github.io/WorldGen/?seed=7HD2P7
 ```
 
+## Export
+
+- **Scene PNG** — download a screenshot of the current 3D view
+- **World JSON** — download the full generated world (config, cells, biomes, rivers, lakes, settlements) for use in game engines, map tools, or VTTs
+
+## Monetization (optional, for self-hosters)
+
+All channels are off by default — with no env vars set, no monetization UI renders and no third-party scripts load. Set any of these at build time to activate:
+
+| Env var | Activates |
+|---------|-----------|
+| `VITE_SUPPORT_KOFI` | Ko-fi donation button (full URL) |
+| `VITE_SUPPORT_GITHUB_SPONSORS` | GitHub Sponsors button (full URL) |
+| `VITE_SUPPORT_PATREON` | Patreon button (full URL) |
+| `VITE_PRO_PRODUCT_URL` | "Get WorldGen Pro" checkout link (Gumroad / Lemon Squeezy product URL) |
+| `VITE_ADSENSE_CLIENT` + `VITE_ADSENSE_SLOT` | Google AdSense unit in the control panel |
+
+For AdSense you must also commit an `ads.txt` to `public/` containing your publisher line (e.g. `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`) and have the site approved in your AdSense account. For GitHub Pages deploys, add these as repository Actions secrets/vars and pass them as `env` in `.github/workflows/deploy.yml`'s build step.
+
 ## Tech Stack
 
 - React 19 + TypeScript + Vite

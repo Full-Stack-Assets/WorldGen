@@ -269,6 +269,37 @@ body {
   text-align: right;
 }
 
+.support-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.support-pro-btn {
+  margin-bottom: 0.5rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.support-links .btn { text-decoration: none; }
+
+.ad-banner {
+  margin-top: 0.75rem;
+  padding: 0.4rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ad-label {
+  display: block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
 .hud-panel {
   pointer-events: auto;
   margin: 0 0.75rem 0.75rem;
@@ -338,7 +369,7 @@ body {
   margin-bottom: 0.65rem;
 }
 
-.seed-row, .share-url-row, .api-key-row { display: flex; gap: 0.4rem; }
+.seed-row, .share-url-row, .api-key-row, .export-row { display: flex; gap: 0.4rem; }
 
 .seed-input {
   flex: 1;
@@ -674,7 +705,7 @@ body {
 .codex-attrs p { font-size: 0.8rem; color: var(--text-secondary); }
 
 .share-panel { margin-top: 1rem; }
-.share-seed { margin-top: 0.4rem; font-size: 0.7rem; }
+.share-seed { margin-top: 0.4rem; margin-bottom: 1.25rem; font-size: 0.7rem; }
 .share-seed code { font-family: var(--font-mono); color: var(--accent); }
 
 .api-key-section { margin-bottom: 0.75rem; }
