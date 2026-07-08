@@ -429,6 +429,70 @@ body {
 
 .error-boundary-actions { display: flex; gap: 0.5rem; justify-content: center; }
 
+/* ─── History ─── */
+.history-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.history-clear {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  cursor: pointer;
+  padding: 0;
+}
+.history-clear:hover { color: var(--accent); }
+
+.history-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.history-chip {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.28rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.history-chip:hover { border-color: var(--accent); color: var(--text-primary); }
+.history-chip.active { border-color: var(--accent); color: var(--accent); }
+
+/* ─── Minimap ─── */
+.minimap-canvas {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  image-rendering: pixelated;
+  cursor: crosshair;
+  display: block;
+}
+
+/* ─── PWA update toast ─── */
+.pwa-toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  pointer-events: auto;
+  max-width: calc(100vw - 2rem);
+}
+
+.pwa-toast-actions { display: flex; gap: 0.4rem; }
+
 .hud-panel {
   pointer-events: auto;
   margin: 0 0.75rem 0.75rem;
