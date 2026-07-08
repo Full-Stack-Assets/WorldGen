@@ -19,6 +19,7 @@ export function TimeControl({ timeOfDay, autoPlay, onScrub, onToggleAutoPlay }: 
         className="hud-btn"
         type="button"
         onClick={onToggleAutoPlay}
+        aria-label={autoPlay ? 'Pause day/night cycle' : 'Resume day/night cycle'}
         title={autoPlay ? 'Pause day/night cycle' : 'Resume day/night cycle'}
       >
         {autoPlay ? '⏸' : '▶'}
@@ -30,6 +31,7 @@ export function TimeControl({ timeOfDay, autoPlay, onScrub, onToggleAutoPlay }: 
         max={1}
         step={0.001}
         value={timeOfDay}
+        aria-label="Time of day"
         onChange={(e) => onScrub(parseFloat(e.target.value))}
       />
       <span className="time-readout">{formatClock(timeOfDay)}</span>

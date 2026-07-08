@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { WorldScene3D } from './components/three/WorldScene3D';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ControlPanel } from './components/ControlPanel';
 import { RegionPanel } from './components/RegionPanel';
 import { WorldHeader } from './components/WorldHeader';
@@ -7,10 +8,16 @@ import { WorldDashboard } from './components/WorldDashboard';
 import { WorldChronicle } from './components/WorldChronicle';
 import { PresetGallery } from './components/PresetGallery';
 import { SharePanel } from './components/SharePanel';
+import { ExportPanel } from './components/ExportPanel';
+import { ProPanel } from './components/ProPanel';
+import { SupportPanel } from './components/SupportPanel';
+import { AffiliatePanel } from './components/AffiliatePanel';
+import { AdBanner } from './components/AdBanner';
 import { BiomeCodex } from './components/BiomeCodex';
 import { TimeControl } from './components/TimeControl';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
 import { useDayNightCycle } from './hooks/useDayNightCycle';
+import { useProStatus } from './hooks/useProStatus';
 import { computeWorldStats } from './lib/stats';
 import { deriveWeather } from './lib/weather';
 import './styles/index.css';
@@ -32,6 +39,7 @@ export default function App() {
   } = useWorldGenerator();
 
   const { timeOfDay, autoPlay, setManualTime, toggleAutoPlay } = useDayNightCycle();
+  const isPro = useProStatus();
 
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
@@ -43,26 +51,40 @@ export default function App() {
 
   return (
     <div className="app-3d">
-      <WorldScene3D
-        world={world}
-        selectedX={selectedRegion?.x}
-        selectedY={selectedRegion?.y}
-        timeOfDay={timeOfDay}
-        weather={weather}
-        onSelectRegion={selectRegion}
-      />
+      <ErrorBoundary fallbackTitle="3D rendering failed">
+        <WorldScene3D
+          world={world}
+          selectedX={selectedRegion?.x}
+          selectedY={selectedRegion?.y}
+          timeOfDay={timeOfDay}
+          weather={weather}
+          onSelectRegion={selectRegion}
+        />
+      </ErrorBoundary>
 
       <div className="hud-overlay">
         <WorldHeader worldLore={worldLore} seed={config.seed} generating={generating} />
 
         <div className="hud-toolbar">
-          <button className="hud-btn" type="button" onClick={() => setLeftOpen((o) => !o)}>
+          <button
+            className="hud-btn"
+            type="button"
+            aria-label={leftOpen ? 'Hide world panel' : 'Show world panel'}
+            aria-pressed={leftOpen}
+            onClick={() => setLeftOpen((o) => !o)}
+          >
             {leftOpen ? '◧' : '◨'} World
           </button>
-          <button className="hud-btn" type="button" onClick={() => setRightOpen((o) => !o)}>
+          <button
+            className="hud-btn"
+            type="button"
+            aria-label={rightOpen ? 'Hide region panel' : 'Show region panel'}
+            aria-pressed={rightOpen}
+            onClick={() => setRightOpen((o) => !o)}
+          >
             {rightOpen ? '◨' : '◧'} Region
           </button>
-          <button className="hud-btn" type="button" onClick={() => setShowCodex(true)}>
+          <button className="hud-btn" type="button" aria-label="Open biome codex" onClick={() => setShowCodex(true)}>
             Codex
           </button>
           <TimeControl
@@ -98,6 +120,7 @@ export default function App() {
                   <ControlPanel
                     config={config}
                     generating={generating}
+                    isPro={isPro}
                     onNewSeed={newSeed}
                     onSetSeed={setSeed}
                     onUpdateConfig={updateConfig}
@@ -105,6 +128,11 @@ export default function App() {
                     loreLoading={loreLoading}
                   />
                   <SharePanel config={config} />
+                  <ExportPanel world={world} />
+                  <ProPanel />
+                  <SupportPanel />
+                  <AffiliatePanel />
+                  <AdBanner />
                 </>
               )}
               {activeTab === 'atlas' && stats && world && (

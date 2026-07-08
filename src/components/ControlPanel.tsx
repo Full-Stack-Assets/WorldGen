@@ -5,6 +5,7 @@ import { ApiKeyInput } from './ApiKeyInput';
 interface ControlPanelProps {
   config: WorldConfig;
   generating: boolean;
+  isPro: boolean;
   onNewSeed: () => void;
   onSetSeed: (seed: string) => void;
   onUpdateConfig: (updates: Partial<WorldConfig>) => void;
@@ -12,9 +13,16 @@ interface ControlPanelProps {
   loreLoading: boolean;
 }
 
+const DETAIL_OPTIONS: { label: string; size: number; pro: boolean }[] = [
+  { label: 'Standard', size: 192, pro: false },
+  { label: 'High', size: 256, pro: true },
+  { label: 'Ultra', size: 320, pro: true },
+];
+
 export function ControlPanel({
   config,
   generating,
+  isPro,
   onNewSeed,
   onSetSeed,
   onUpdateConfig,
@@ -75,6 +83,29 @@ export function ControlPanel({
           step={0.05}
           onChange={(v) => onUpdateConfig({ persistence: v })}
         />
+      </div>
+
+      <div className="panel-section">
+        <h3>Detail</h3>
+        <div className="detail-row">
+          {DETAIL_OPTIONS.map((opt) => {
+            const locked = opt.pro && !isPro;
+            const active = config.width === opt.size;
+            return (
+              <button
+                key={opt.size}
+                type="button"
+                className={`detail-btn ${active ? 'active' : ''}`}
+                disabled={generating || locked || active}
+                onClick={() => onUpdateConfig({ width: opt.size, height: opt.size })}
+              >
+                {opt.label}
+                {locked && <span className="pro-tag">Pro</span>}
+              </button>
+            );
+          })}
+        </div>
+        <p className="hint">Higher detail generates richer worlds but takes longer.</p>
       </div>
 
       <div className="panel-section">

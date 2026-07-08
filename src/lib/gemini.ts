@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
 import type { Biome, RegionInfo, WorldData, WorldLore } from '../types/world';
 import { BIOME_LABELS } from './colors';
 import { getGeminiApiKey } from './apiKey';
@@ -58,6 +57,9 @@ export async function generateRegionLore(
   if (!apiKey) return generateFallbackRegionLore(region, world);
 
   try {
+    // Lazy import keeps the Gemini SDK out of the initial bundle — it only
+    // loads for users who actually generate AI lore.
+    const { GoogleGenAI } = await import('@google/genai');
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
@@ -81,6 +83,7 @@ export async function generateWorldLore(world: WorldData): Promise<WorldLore> {
   if (!apiKey) return generateFallbackWorldLore(world, sampleRegions);
 
   try {
+    const { GoogleGenAI } = await import('@google/genai');
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
