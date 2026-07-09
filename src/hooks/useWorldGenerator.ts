@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionInfo, WorldConfig, WorldData, WorldLore } from '../types/world';
 import { DEFAULT_CONFIG } from '../types/world';
 import { generateRegionLore, generateWorldLore } from '../lib/gemini';
 import { parseSeed, randomSeed } from '../lib/worldgen';
 import { generateWorldAsync } from '../lib/worldGenService';
+import { recordWorld } from '../lib/history';
+import { debounce } from '../lib/debounce';
 import { parseShareParams } from '../lib/share';
+
+const REGEN_DEBOUNCE_MS = 220;
 
 function getInitialSeed(): number {
   const params = new URLSearchParams(window.location.search);
@@ -30,24 +34,34 @@ export function useWorldGenerator() {
   const [loreLoading, setLoreLoading] = useState(false);
   const configRef = useRef(config);
   configRef.current = config;
-  // Monotonic token: only the most recent regenerate() result is applied, so
+  // Monotonic token: only the most recent generation result is applied, so
   // rapid config changes can't race a slow (worker) result onto a newer world.
   const requestRef = useRef(0);
 
-  const regenerate = useCallback((overrides?: Partial<WorldConfig>) => {
-    const newConfig = { ...configRef.current, ...overrides };
-    setConfig(newConfig);
-    setGenerating(true);
-
+  const runGenerate = useCallback((cfg: WorldConfig) => {
     const token = ++requestRef.current;
-    generateWorldAsync(newConfig).then((data) => {
+    generateWorldAsync(cfg).then((data) => {
       if (token !== requestRef.current) return; // superseded by a newer request
       setWorld(data);
       setSelectedRegion(null);
       setWorldLore(null);
       setGenerating(false);
+      recordWorld(data.config);
     });
   }, []);
+
+  // Slider drags fire continuously; debounce the (expensive) generation so only
+  // the settled value regenerates, while config state updates immediately for a
+  // responsive UI.
+  const debouncedGenerate = useMemo(() => debounce(runGenerate, REGEN_DEBOUNCE_MS), [runGenerate]);
+
+  const regenerate = useCallback((overrides?: Partial<WorldConfig>) => {
+    const newConfig = { ...configRef.current, ...overrides };
+    setConfig(newConfig);
+    setGenerating(true);
+    debouncedGenerate.cancel(); // an explicit regenerate pre-empts any pending debounce
+    runGenerate(newConfig);
+  }, [runGenerate, debouncedGenerate]);
 
   const newSeed = useCallback(() => {
     regenerate({ seed: randomSeed() });
@@ -57,9 +71,18 @@ export function useWorldGenerator() {
     regenerate({ seed: parseSeed(seedStr) });
   }, [regenerate]);
 
+  // Immediate regeneration for discrete changes (presets, detail, seed).
   const updateConfig = useCallback((updates: Partial<WorldConfig>) => {
     regenerate(updates);
   }, [regenerate]);
+
+  // Debounced regeneration for continuous changes (slider drags).
+  const updateConfigLive = useCallback((updates: Partial<WorldConfig>) => {
+    const newConfig = { ...configRef.current, ...updates };
+    setConfig(newConfig);
+    setGenerating(true);
+    debouncedGenerate(newConfig);
+  }, [debouncedGenerate]);
 
   const selectRegion = useCallback(async (x: number, y: number) => {
     const currentWorld = world;
@@ -93,7 +116,8 @@ export function useWorldGenerator() {
 
   useEffect(() => {
     regenerate();
-  }, [regenerate]);
+    return () => debouncedGenerate.cancel();
+  }, [regenerate, debouncedGenerate]);
 
   return {
     config,
@@ -106,6 +130,7 @@ export function useWorldGenerator() {
     newSeed,
     setSeed,
     updateConfig,
+    updateConfigLive,
     selectRegion,
     generateLore,
     clearSelection: () => setSelectedRegion(null),

@@ -15,6 +15,9 @@ import { AffiliatePanel } from './components/AffiliatePanel';
 import { AdBanner } from './components/AdBanner';
 import { BiomeCodex } from './components/BiomeCodex';
 import { TimeControl } from './components/TimeControl';
+import { Minimap } from './components/Minimap';
+import { HistoryPanel } from './components/HistoryPanel';
+import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
 import { useDayNightCycle } from './hooks/useDayNightCycle';
 import { useProStatus } from './hooks/useProStatus';
@@ -33,6 +36,7 @@ export default function App() {
     newSeed,
     setSeed,
     updateConfig,
+    updateConfigLive,
     selectRegion,
     generateLore,
     clearSelection,
@@ -124,9 +128,11 @@ export default function App() {
                     onNewSeed={newSeed}
                     onSetSeed={setSeed}
                     onUpdateConfig={updateConfig}
+                    onUpdateConfigLive={updateConfigLive}
                     onGenerateLore={generateLore}
                     loreLoading={loreLoading}
                   />
+                  <HistoryPanel activeSeed={config.seed} onLoad={setSeed} />
                   <SharePanel config={config} />
                   <ExportPanel world={world} />
                   <ProPanel />
@@ -136,7 +142,15 @@ export default function App() {
                 </>
               )}
               {activeTab === 'atlas' && stats && world && (
-                <WorldDashboard stats={stats} world={world} />
+                <>
+                  <Minimap
+                    world={world}
+                    selectedX={selectedRegion?.x}
+                    selectedY={selectedRegion?.y}
+                    onSelect={selectRegion}
+                  />
+                  <WorldDashboard stats={stats} world={world} />
+                </>
               )}
               {activeTab === 'chronicle' && (
                 <WorldChronicle lore={worldLore} loading={loreLoading} onGenerate={generateLore} />
@@ -155,6 +169,8 @@ export default function App() {
       {showCodex && (
         <BiomeCodex onClose={() => setShowCodex(false)} highlightBiome={selectedRegion?.biome} />
       )}
+
+      <PWAUpdatePrompt />
     </div>
   );
 }

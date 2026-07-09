@@ -31,9 +31,14 @@ WorldGen transforms seeds into fully explorable 3D planets with terrain, oceans,
 
 ### UI
 - Fullscreen 3D viewport with glass-morphism HUD overlays
-- Atlas dashboard with biome distribution and settlement list
+- Atlas dashboard with biome distribution, settlement list, and a clickable 2D minimap
+- Recent-worlds history to revisit past seeds
 - Biome Codex encyclopedia
 - Mobile-optimized collapsible panels
+
+### Progressive Web App
+- Installable and works fully offline — the app shell is precached and the 3D scene fetches no external assets at runtime
+- In-app prompt when a new version is available
 
 ## Quick Start
 
@@ -51,7 +56,9 @@ npm test        # run the Vitest suite
 npm run build   # type-check + production build
 ```
 
-World generation runs in a **Web Worker** (`src/lib/worldgen.worker.ts`) so large grids never block the UI, with an automatic synchronous fallback. The core generation/config logic is covered by Vitest tests (`src/**/*.test.ts`), and CI type-checks, tests, and builds every PR.
+World generation runs in a **Web Worker** (`src/lib/worldgen.worker.ts`) so large grids never block the UI, with an automatic synchronous fallback. Slider changes are debounced so dragging regenerates only the settled value. The core generation/config logic is covered by Vitest tests (`src/**/*.test.ts`), and CI type-checks, tests, and builds every PR.
+
+The app is a **PWA** via `vite-plugin-pwa` (`npm run preview` to exercise the service worker locally). Regenerating icons: `public/icon-*.png` are rendered from `public/favicon.svg`.
 
 ### AI Lore
 

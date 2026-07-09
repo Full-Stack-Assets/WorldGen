@@ -9,6 +9,7 @@ interface ControlPanelProps {
   onNewSeed: () => void;
   onSetSeed: (seed: string) => void;
   onUpdateConfig: (updates: Partial<WorldConfig>) => void;
+  onUpdateConfigLive: (updates: Partial<WorldConfig>) => void;
   onGenerateLore: () => void;
   loreLoading: boolean;
 }
@@ -26,6 +27,7 @@ export function ControlPanel({
   onNewSeed,
   onSetSeed,
   onUpdateConfig,
+  onUpdateConfigLive,
   onGenerateLore,
   loreLoading,
 }: ControlPanelProps) {
@@ -56,7 +58,7 @@ export function ControlPanel({
           min={30}
           max={150}
           step={5}
-          onChange={(v) => onUpdateConfig({ scale: v })}
+          onChange={(v) => onUpdateConfigLive({ scale: v })}
         />
         <Slider
           label="Octaves"
@@ -64,7 +66,7 @@ export function ControlPanel({
           min={1}
           max={8}
           step={1}
-          onChange={(v) => onUpdateConfig({ octaves: v })}
+          onChange={(v) => onUpdateConfigLive({ octaves: v })}
         />
         <Slider
           label="Sea Level"
@@ -73,7 +75,7 @@ export function ControlPanel({
           max={0.55}
           step={0.01}
           format={(v) => `${(v * 100).toFixed(0)}%`}
-          onChange={(v) => onUpdateConfig({ seaLevel: v })}
+          onChange={(v) => onUpdateConfigLive({ seaLevel: v })}
         />
         <Slider
           label="Persistence"
@@ -81,7 +83,7 @@ export function ControlPanel({
           min={0.2}
           max={0.8}
           step={0.05}
-          onChange={(v) => onUpdateConfig({ persistence: v })}
+          onChange={(v) => onUpdateConfigLive({ persistence: v })}
         />
       </div>
 
@@ -116,7 +118,7 @@ export function ControlPanel({
           min={30}
           max={100}
           step={5}
-          onChange={(v) => onUpdateConfig({ moistureScale: v })}
+          onChange={(v) => onUpdateConfigLive({ moistureScale: v })}
         />
         <Slider
           label="Temperature"
@@ -124,7 +126,7 @@ export function ControlPanel({
           min={30}
           max={100}
           step={5}
-          onChange={(v) => onUpdateConfig({ temperatureScale: v })}
+          onChange={(v) => onUpdateConfigLive({ temperatureScale: v })}
         />
       </div>
 
