@@ -1,155 +1,137 @@
 # WorldGen / Worldline
 
-**WorldGen is now the canonical visual runtime for the Worldline master application.**
+**WorldGen is the canonical rendering/runtime repository for the Worldline master application.**
 
-Worldline wraps the procedural 3D engine in a provider-independent state, time, branching, Cosmos, comparison, and recursive-evaluation layer. The default experience is 3D space + navigable time with World, Time, Futures, Compare, Data, and Library surfaces plus an optional Mechanics inspector. The launch build remains credential-free; future Google/Cesium and benchmark integrations are adapters rather than hard dependencies.
+Worldline v0.2 combines a credential-free procedural 3D runtime with a free-first real-Earth view, explicit source provenance, navigable time, branching simulation, Cosmos, benchmark/export contracts, and B+ constitutional recursive research.
 
-The current release includes deterministic branch/replay contracts, Temporal Parallax markers, a Chronos-inspired worldline trail, scalable future representations, Earth/extraterrestrial world classes, explicit epistemic/fidelity labels, and a bounded B+ recursive loop whose deciding evaluation contract cannot be changed by the candidate it evaluates.
+**Live production:** https://full-stack-assets.github.io/WorldGen/
 
-See [`docs/WORLDLINE_RUNTIME.md`](docs/WORLDLINE_RUNTIME.md) for the runtime and evidence contract.
+See [`docs/WORLDLINE_RUNTIME.md`](docs/WORLDLINE_RUNTIME.md) for the runtime/evidence contract and [`docs/WORLDLINE_V0.2.md`](docs/WORLDLINE_V0.2.md) for v0.2 scope.
 
-**Procedural 3D worlds with cinematic quality — infinite stories.**
+## v0.2 architecture
 
-WorldGen transforms seeds into fully explorable 3D planets with terrain, oceans, settlements, rivers, lakes, and AI-powered lore. Built with Three.js for real-time rendering with sky, clouds, bloom, and atmospheric fog.
+The application has six primary surfaces plus an evidence inspector:
 
-**Live site:** [https://full-stack-assets.github.io/WorldGen/](https://full-stack-assets.github.io/WorldGen/)
+- **World** — procedural worlds or the free Open Earth view.
+- **Time** — Playback, Time Slice, Temporal Parallax, and Time Volume.
+- **Futures** — deterministic branches for worlds with an attached simulation model.
+- **Compare** — committed-state Difference Lens.
+- **Data** — simulation metrics, planetary state, source/provenance state.
+- **Library** — Earth, New Bedford World #001, Mars, Europa, generated/exoworld families, and Chronos export.
+- **Mechanics** — lineage, provenance, benchmark adapters, recursive research receipts, and constitutional gates.
 
-## Worldline surfaces
+Worldline explicitly separates `OBSERVED`, `RECONSTRUCTED`, `SIMULATED`, `GENERATED`, and `SPECULATIVE` state. A world's physical identity and its rendered surface can carry different epistemic classes.
 
-- **World** — procedural generation and spatial exploration.
-- **Time** — Playback, Time Slice, Temporal Parallax, and Time Volume controls.
-- **Futures** — branches that scale into Future Families, landscapes, and Future Continents.
-- **Compare** — committed-snapshot Difference Lens.
-- **Data** — world metrics plus Planetary State and multi-part Habitability Landscape.
-- **Library** — Earth, New Bedford World #001, Mars, Europa, and generated exoworld families.
-- **Mechanics** — epistemic status, model fidelity, lineage, branch ancestry, and the constitutional recursive loop.
+## Free-first Earth
 
-Generated and simulated states are not presented as calibrated predictions. Observed, reconstructed, simulated, generated, and speculative content remain explicitly labeled.
+v0.2 does **not** require Google, Cesium, Earth Engine, or any paid geospatial credential.
 
-## Features
+For New Bedford World #001, the app attempts a free Open Earth view using pinned MapLibre loaded at runtime with the OpenFreeMap Liberty style and OpenStreetMap/OpenMapTiles-derived geography. When the initial network map cannot be established, Worldline falls back to the existing procedural Three.js world without changing canonical world identity.
 
-### 3D Engine
-- Real-time 3D terrain mesh with vertex-colored biomes and elevation displacement
-- Cinematic sky, volumetric clouds, stars, and atmospheric fog
-- Reflective ocean plane with animated emissive water
-- Bloom, vignette, and chromatic aberration post-processing
-- Orbit camera with shadows and contact shadows
-- Glowing settlement markers (capitals, cities, towns, villages)
-- Animated selection rings on explored regions
-- Worldline trail and Temporal Parallax overlay markers
+The provider/status strip shows the active rendering path and epistemic surface class. The Truth Lens makes observed/reconstructed/generated/simulated/speculative display state visually distinguishable.
 
-### World Generation
-- 8 world presets: Classic, Archipelago, Pangaea, Desert, Frozen, Volcanic, Eden, Alien
-- 15 biomes including lakes and rivers
-- Procedural settlements placed by suitability scoring
-- Seed-based reproducible worlds with shareable URLs
+The procedural renderer remains the guaranteed build-time/offline fallback. Runtime map/tile provider IDs never become branch or world IDs.
 
-### Worldline simulation layer
-- Canonical world state with immutable branch creation and replay
-- Explicit epistemic and model-fidelity labels
-- Deterministic future-family representation thresholds
-- Difference Lens across committed snapshots
-- Worldline Cosmos catalog with provider fallback semantics
-- B+ constitutional recursive evaluation demonstration with frozen deciding contracts
+## New Bedford World #001
 
-### AI & Lore
-- Region exploration with names, descriptions, lore, and quest hooks
-- World Chronicle: mythology, factions, historical eras
-- Gemini API support with in-app key configuration
-- Rich fallback content when offline
+`public/data/new-bedford/` contains the first versioned real-city provenance package:
 
-### UI
-- Fullscreen 3D viewport with glass-morphism HUD overlays
-- Atlas dashboard with biome distribution, settlement list, and a clickable 2D minimap
-- Recent-worlds history to revisit past seeds
-- Biome Codex encyclopedia
-- Mobile-optimized panels
+- `manifest.json` — publisher/source/license/coverage/checksum/status/transformation metadata.
+- `snapshots.json` — source-time metadata separating observation, nearest observation, reconstruction, and simulation time.
+- `geometry.geojson` — a small derived geographic coverage artifact, not a parcel-owner dataset.
 
-### Progressive Web App
-- Installable and works fully offline — the app shell is precached and the 3D scene fetches no external assets at runtime
-- In-app prompt when a new version is available
+The package references public City of New Bedford and MassGIS sources while intentionally excluding owner/address/person-level assessor information. Full MassGIS imagery/building/parcel datasets are not redistributed in this repository.
 
-## Quick Start
+New Bedford remains labeled **RECONSTRUCTED**, not a complete photogrammetric or operational municipal digital twin.
+
+## 3D / visual engine
+
+The procedural WorldGen runtime includes:
+
+- real-time 3D terrain mesh and biome/elevation displacement;
+- ocean, sky, clouds, stars, fog, shadows, bloom, vignette, and chromatic effects;
+- procedural vegetation and settlements;
+- seed-based reproducible generation;
+- Web Worker generation with synchronous fallback;
+- Temporal Parallax markers and a luminous Chronos-style worldline trail.
+
+The Open Earth runtime adds planet/city geographic navigation and attempts 3D building extrusion from the map's building source when available.
+
+## Time and futures
+
+New Bedford's current source timeline distinguishes a 2023 parcel-service baseline, 2025 aerial-source metadata, a 2026 reconstructed view, and later simulated time. Missing years are not presented as direct observations.
+
+Open Earth Temporal Parallax renders labeled time planes so source-time and simulation-time states can coexist without erasing provenance.
+
+WorldGen Prime retains deterministic branch simulation and scalable future representation:
+
+- 1–2 branches: direct comparison
+- 3–4: individual worldlines
+- 5–50: Future Families
+- 51–10,000: Future Landscape
+- 10,001+: Future Continents
+
+These are discrete scenario groupings, not calibrated probabilities. Worlds without an attached simulation model do not reuse WorldGen future metrics.
+
+## Cosmos v0.2
+
+Planetary state can represent radius, gravity, rotation/orbit periods, atmosphere, pressure description, temperature, radiation, illumination, light-time, reference frame, source-state metadata, and multiple habitability dimensions.
+
+Mars and Europa are represented as **observed celestial identities** while their current local visual surfaces remain explicitly **generated**. The exoworld family remains speculative.
+
+## Benchmark Lab
+
+Worldline provides deterministic compatibility/export contracts for:
+
+- **4DWorldBench-style** temporal render sequences;
+- **Omni-WorldBench-style** ordered action/state-transition traces.
+
+Benchmark receipts support `NOT_RUN`, `COMPLETED`, `FAILED`, and `INCOMPATIBLE`. Worldline refuses to attach a score unless the benchmark was actually executed to completion. Adapter readiness is not benchmark success.
+
+## Recursive Research Engine
+
+The B+ loop is:
+
+`OBSERVE → DETECT → EXPLAIN → CHALLENGE → EXPERIMENT → BUILD → EXECUTE → COMPARE → VERIFY → PROMOTE/REJECT → MONITOR → REALITY WAKE → REOPEN`
+
+v0.2 includes a concrete source-update conflict cycle with competing reconciliation candidates, a frozen evaluator established before candidate generation, separate generator/verifier identities, evaluator-drift blocking, rollback references, and promotion receipts.
+
+Only reversible low-risk rendering/data-normalization changes are eligible for automatic promotion. Architecture, policy, model, authority, and scientific-claim changes remain gated.
+
+Reality Wake is phrased epistemically: **the set of futures consistent with current evidence changed** — not "the future changed."
+
+## Chronos Bridge
+
+The Library can export `worldline-chronos-v0.2.json`, a deterministic provider-independent interchange package containing world identity, spatial reference, selected time, branch ancestry, events, metrics, seeds, evidence/fidelity labels, and replay commitments.
+
+This prepares a future Unreal/Cesium Chronos runtime without pretending v0.2 includes a shipping Unreal build.
+
+## Quick start
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open `http://localhost:5173`.
 
-## Development
-
-```bash
-npm test        # run the Vitest suite
-npm run build   # type-check + production build
-```
-
-World generation runs in a **Web Worker** (`src/lib/worldgen.worker.ts`) so large grids never block the UI, with an automatic synchronous fallback. Slider changes are debounced so dragging regenerates only the settled value. The core generation/config logic is covered by Vitest tests (`src/**/*.test.ts`), and CI type-checks, tests, and builds every PR.
-
-The app is a **PWA** via `vite-plugin-pwa` (`npm run preview` to exercise the service worker locally). Regenerating icons: `public/icon-*.png` are rendered from `public/favicon.svg`.
-
-### AI Lore
-
-Paste your Gemini API key in the **AI Lore** panel, or set `VITE_GEMINI_API_KEY` in `.env`.
-
-Get a free key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-
-## Controls
-
-| Action | Input |
-|--------|-------|
-| Orbit camera | Drag |
-| Zoom | Scroll / pinch |
-| Explore region | Click terrain |
-| Change Worldline surface | World / Time / Futures / Compare / Data / Library |
-| Inspect evidence/lineage | Mechanics |
-
-## Share a World
-
-```
-https://full-stack-assets.github.io/WorldGen/?seed=7HD2P7
-```
-
-## Export
-
-- **Scene PNG** — download a screenshot of the current 3D view
-- **World JSON** — download the full generated world (config, cells, biomes, rivers, lakes, settlements) for use in game engines, map tools, or VTTs
-
-## Monetization (optional, for self-hosters)
-
-All channels are off by default — with no env vars set, no monetization UI renders and no third-party scripts load. Existing environment switches remain supported even though the master Worldline shell does not foreground monetization controls.
-
-| Env var | Activates |
-|---------|-----------|
-| `VITE_SUPPORT_KOFI` | Ko-fi donation button (full URL) |
-| `VITE_SUPPORT_GITHUB_SPONSORS` | GitHub Sponsors button (full URL) |
-| `VITE_SUPPORT_PATREON` | Patreon button (full URL) |
-| `VITE_PRO_PRODUCT_URL` | WorldGen Pro checkout link |
-| `VITE_GUMROAD_PRODUCT_ID` | In-app license-key unlock for Pro |
-| `VITE_ADSENSE_CLIENT` + `VITE_ADSENSE_SLOT` | Google AdSense unit |
-| `VITE_AFFILIATE_ENABLED` | Recommended-tools panel with affiliate links |
-
-## Tech Stack
-
-- React 19 + TypeScript + Vite
-- Three.js + React Three Fiber + Drei
-- Postprocessing (bloom, vignette, chromatic aberration)
-- Custom Perlin noise procedural engine
-- Vitest deterministic state/branch/recursive verification
-- Google Gemini API (optional lore feature)
-
-## Deploy
-
-GitHub Pages deploys automatically on push to `main` via GitHub Actions. The production build uses the procedural provider by default and does not require Google geospatial credentials.
+## Verification
 
 ```bash
+npm run typecheck
+npm test
 npm run build
 ```
 
+CI runs the same type-check/test/build gates on pull requests and `main`. GitHub Pages deploys automatically from `main` with `VITE_BASE=/WorldGen/`.
+
+## Optional AI lore
+
+The original Gemini-powered lore feature remains optional. The simulation/Earth runtime does not require an AI key. Set `VITE_GEMINI_API_KEY` or use the existing in-app configuration only if you want lore generation.
+
 ## Evidence boundary
 
-The current application is a deterministic visualization and simulation prototype. It does not claim calibrated future probabilities, forecasting accuracy, realistic interacting human populations, formal manifold geometry, validated extraterrestrial habitability, or unrestricted self-modification. External Earth/cosmos providers and 4D benchmark suites are future adapters with their own validation and licensing requirements.
+Worldline v0.2 does not claim calibrated future probabilities, forecasting accuracy, a fully validated New Bedford digital twin, realistic interacting populations, formal manifold geometry, executed external benchmark scores without receipts, observed exoplanet surfaces without evidence, or unrestricted self-modification. Open data/providers are visual and evidence substrates; canonical Worldline state remains provider-independent.
 
 ## License
 
