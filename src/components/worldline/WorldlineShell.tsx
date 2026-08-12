@@ -14,6 +14,7 @@ import { TruthLens, epistemicVisualClass } from './TruthLens';
 import { WorldlineHUD } from './WorldlineHUD';
 import './worldline.css';
 import './worldline-v02.css';
+import './worldline-v05.css';
 
 export const NAV_ITEMS = ['WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY'] as const;
 export type WorldlineSurface = typeof NAV_ITEMS[number];

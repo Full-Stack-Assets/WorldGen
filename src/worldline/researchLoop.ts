@@ -45,6 +45,23 @@ export interface ResearchPromotion {
   reason: string;
 }
 
+export interface RealityWakeRecord {
+  id: string;
+  previousObservationId: string;
+  incomingObservationId: string;
+  previousValue: number;
+  incomingValue: number;
+  affectedCandidateIds: string[];
+  message: string;
+}
+
+export interface ReopenRecord {
+  id: string;
+  decisionId: string;
+  reason: string;
+  triggeringObservationId: string;
+}
+
 export interface ResearchCycle {
   stageHistory: RecursiveStage[];
   observationId: string;
@@ -54,8 +71,13 @@ export interface ResearchCycle {
   verifier: ResearchVerifierReceipt;
   verifications: ResearchVerifierReceipt[];
   promotion: ResearchPromotion;
+  realityWake: RealityWakeRecord;
   realityWakeMessage: string;
   lineage: string[];
+}
+
+export interface ReopenedResearchCycle extends ResearchCycle {
+  reopen: ReopenRecord;
 }
 
 function loss(candidate: number, incoming: number): number {
@@ -95,7 +117,28 @@ function decide(candidate: ResearchCandidate, receipt: ResearchVerifierReceipt):
   if (candidate.kind === 'LOW_RISK_RENDERING' || candidate.kind === 'DATA_NORMALIZATION') {
     return { candidateId: candidate.id, status: 'AUTO_PROMOTED', reason: 'Reversible machine-verifiable candidate passed frozen independent verification.' };
   }
-  return { candidateId: candidate.id, status: 'REQUIRES_APPROVAL', reason: 'Model/simulation/benchmark changes require explicit promotion approval in v0.2.' };
+  return { candidateId: candidate.id, status: 'REQUIRES_APPROVAL', reason: 'Model/simulation/benchmark changes require explicit promotion approval.' };
+}
+
+function createRealityWake(input: {
+  previousValue: number;
+  incomingValue: number;
+  observationId: string;
+  candidateIds: string[];
+  conflictDetected: boolean;
+}): RealityWakeRecord {
+  const previousObservationId = `accepted-source-${input.previousValue}`;
+  return {
+    id: `reality-wake:${input.observationId}`,
+    previousObservationId,
+    incomingObservationId: input.observationId,
+    previousValue: input.previousValue,
+    incomingValue: input.incomingValue,
+    affectedCandidateIds: [...input.candidateIds],
+    message: input.conflictDetected
+      ? 'The set of futures consistent with current evidence changed.'
+      : 'No new evidence conflict changed the represented future set.',
+  };
 }
 
 export function runDataUpdateCycle(input: {
@@ -104,8 +147,8 @@ export function runDataUpdateCycle(input: {
   mutateEvaluator?: boolean;
   forceArchitecturalCandidate?: boolean;
 }): ResearchCycle {
-  const generatorId = 'worldline-candidate-generator-v0.2';
-  const verifierId = 'worldline-independent-verifier-v0.2';
+  const generatorId = 'worldline-candidate-generator-v0.5';
+  const verifierId = 'worldline-independent-verifier-v0.5';
   const conflictDetected = input.previousValue !== input.incomingValue;
   const observationId = `source-update-${input.previousValue}-${input.incomingValue}`;
   const evaluationContract: FrozenEvaluationContract = Object.freeze({
@@ -124,6 +167,7 @@ export function runDataUpdateCycle(input: {
       passed: true,
       reason: 'No source conflict detected.',
     };
+    const realityWake = createRealityWake({ ...input, observationId, candidateIds: [], conflictDetected });
     return {
       stageHistory: [...RECURSIVE_STAGES],
       observationId,
@@ -133,8 +177,9 @@ export function runDataUpdateCycle(input: {
       verifier,
       verifications: [verifier],
       promotion: { candidateId: null, status: 'NO_PROMOTION', reason: 'No reconciliation candidate required.' },
-      realityWakeMessage: 'No new evidence conflict changed the represented future set.',
-      lineage: [observationId, evaluationContract.id],
+      realityWake,
+      realityWakeMessage: realityWake.message,
+      lineage: [observationId, evaluationContract.id, realityWake.id],
     };
   }
 
@@ -194,6 +239,13 @@ export function runDataUpdateCycle(input: {
     ? verifications.find((receipt) => receipt.candidateId === selected.id) ?? verifications[0]
     : verifications[0];
   const promotion = selected ? decide(selected, verifier) : { candidateId: null, status: 'NO_PROMOTION' as const, reason: 'All candidates failed frozen verification.' };
+  const realityWake = createRealityWake({
+    previousValue: input.previousValue,
+    incomingValue: input.incomingValue,
+    observationId,
+    candidateIds: evaluated.map((candidate) => candidate.id),
+    conflictDetected,
+  });
 
   return {
     stageHistory: [...RECURSIVE_STAGES],
@@ -204,7 +256,26 @@ export function runDataUpdateCycle(input: {
     verifier,
     verifications,
     promotion,
-    realityWakeMessage: 'The set of futures consistent with current evidence changed.',
-    lineage: [observationId, evaluationContract.id, ...evaluated.map((candidate) => candidate.id), verifier.verifierId],
+    realityWake,
+    realityWakeMessage: realityWake.message,
+    lineage: [observationId, evaluationContract.id, ...evaluated.map((candidate) => candidate.id), verifier.verifierId, realityWake.id],
+  };
+}
+
+export function reopenResearchDecision(
+  cycle: ResearchCycle,
+  reason: string,
+  triggeringObservationId: string,
+): ReopenedResearchCycle {
+  const decisionId = `${cycle.observationId}:promotion`;
+  return {
+    ...structuredClone(cycle),
+    reopen: {
+      id: `reopen:${decisionId}:${triggeringObservationId}`,
+      decisionId,
+      reason,
+      triggeringObservationId,
+    },
+    lineage: [...cycle.lineage, `reopen:${decisionId}:${triggeringObservationId}`],
   };
 }
