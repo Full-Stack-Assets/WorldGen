@@ -1,12 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import { createBranch, selectBranch, selectWorld, selectYear } from '../../worldline/state';
+import type { ProviderStatus } from '../../worldline/providers';
 import type { TimeMode, WorldlineState } from '../../worldline/types';
 import { ComparePanel } from './ComparePanel';
 import { DataPanel } from './DataPanel';
 import { FutureNavigator } from './FutureNavigator';
 import { LibraryPanel } from './LibraryPanel';
 import { MechanicsPanel } from './MechanicsPanel';
+import { ProviderStatusStrip } from './ProviderStatusStrip';
 import { TimeNavigator } from './TimeNavigator';
+import { TruthLens, epistemicVisualClass } from './TruthLens';
 import { WorldlineHUD } from './WorldlineHUD';
 import './worldline.css';
 
@@ -18,26 +21,34 @@ export function WorldlineShell({
   onStateChange,
   scene,
   worldTools,
+  providerStatus,
+  fallbackActive,
 }: {
   state: WorldlineState;
   onStateChange: (next: WorldlineState) => void;
   scene: ReactNode;
   worldTools: ReactNode;
+  providerStatus: ProviderStatus;
+  fallbackActive: boolean;
 }) {
   const [surface, setSurface] = useState<WorldlineSurface>('WORLD');
   const [mechanicsOpen, setMechanicsOpen] = useState(false);
+  const [truthLens, setTruthLens] = useState(false);
 
   const setTimeMode = (mode: TimeMode) => onStateChange({ ...state, timeMode: mode });
   const branchCount = Object.keys(state.branches).length;
+  const truthClass = epistemicVisualClass(state.activeWorld.surfaceEpistemicClass ?? state.activeWorld.epistemicClass);
 
   return (
-    <main className="wl-app">
+    <main className={`wl-app ${truthLens ? `wl-truth-active ${truthClass}` : ''}`}>
       <div className="wl-scene">{scene}</div>
       <div className={`wl-atmosphere wl-atmosphere-${state.activeWorld.kind.toLowerCase()}`} aria-hidden="true" />
       <div className="wl-interface">
         <WorldlineHUD state={state} />
+        <ProviderStatusStrip state={state} provider={providerStatus} fallbackActive={fallbackActive} />
         <nav className="wl-nav glass-panel" aria-label="Worldline primary navigation">
           {NAV_ITEMS.map((item) => <button type="button" key={item} className={surface === item ? 'active' : ''} onClick={() => setSurface(item)}>{item}</button>)}
+          <TruthLens active={truthLens} onToggle={() => setTruthLens((value) => !value)} />
           <button type="button" className={mechanicsOpen ? 'active mechanics' : 'mechanics'} onClick={() => setMechanicsOpen((value) => !value)}>MECHANICS</button>
         </nav>
 
@@ -47,7 +58,7 @@ export function WorldlineShell({
           {surface === 'FUTURES' && <FutureNavigator state={state} onCreateBranch={() => onStateChange(createBranch(state, { label: `Future ${branchCount}`, atYear: state.selectedYear }))} onSelectBranch={(branchId) => onStateChange(selectBranch(state, branchId))} />}
           {surface === 'COMPARE' && <ComparePanel state={state} />}
           {surface === 'DATA' && <DataPanel state={state} />}
-          {surface === 'LIBRARY' && <LibraryPanel worlds={state.worlds} activeWorldId={state.activeWorld.id} onSelectWorld={(worldId) => onStateChange(selectWorld(state, worldId))} />}
+          {surface === 'LIBRARY' && <LibraryPanel state={state} onSelectWorld={(worldId) => onStateChange(selectWorld(state, worldId))} />}
         </div>
 
         {mechanicsOpen && <aside className="wl-mechanics-drawer"><MechanicsPanel state={state} /></aside>}
