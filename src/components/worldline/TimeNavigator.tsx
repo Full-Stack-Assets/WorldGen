@@ -1,14 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
+import { getSourceTimelineForWorld, nearestSourceSnapshot } from '../../worldline/sourceTimeline';
+import { createTwinTimelineState } from '../../worldline/twinTimeline';
 import type { TimeMode, WorldlineState } from '../../worldline/types';
 
 const MODES: TimeMode[] = ['PLAYBACK', 'SLICE', 'PARALLAX', 'VOLUME'];
-
-function sourceTimeNote(state: WorldlineState): string {
-  if (state.activeWorld.id !== 'new-bedford-001') return 'Simulation timeline';
-  if (state.selectedYear <= 2023) return 'Observation source: parcel-service baseline (2023 metadata)';
-  if (state.selectedYear <= 2025) return 'Nearest observation: MassGIS 2025 aerial source';
-  if (state.selectedYear === 2026) return 'Reconstructed present: open geography + public-source package';
-  return 'Simulated future layered over reconstructed present';
-}
 
 export function TimeNavigator({
   state,
@@ -19,21 +14,51 @@ export function TimeNavigator({
   onYear: (year: number) => void;
   onMode: (mode: TimeMode) => void;
 }) {
+  const sourceTimeline = useMemo(() => getSourceTimelineForWorld(state.activeWorld.id), [state.activeWorld.id]);
+  const initialSourceYear = nearestSourceSnapshot(sourceTimeline, Math.min(state.selectedYear, 2026))?.entry.year ?? state.selectedYear;
+  const [sourceYear, setSourceYear] = useState(initialSourceYear);
+
+  useEffect(() => {
+    const nearest = nearestSourceSnapshot(sourceTimeline, Math.min(state.selectedYear, 2026));
+    setSourceYear(nearest?.entry.year ?? state.selectedYear);
+  }, [state.activeWorld.id, sourceTimeline]);
+
+  const sourceSelection = nearestSourceSnapshot(sourceTimeline, sourceYear);
+  const twin = createTwinTimelineState(state.selectedYear, sourceYear);
+
   return (
     <section className="wl-panel wl-time-panel glass-panel">
       <div className="wl-panel-kicker">TIME</div>
+      <label className="wl-timeline-label" htmlFor="worldline-simulation-year">SIMULATION TIME</label>
       <div className="wl-time-row">
         <input
-          aria-label="Worldline year"
+          id="worldline-simulation-year"
+          aria-label="Worldline simulation year"
           type="range"
-          min={2023}
+          min={2026}
           max={2046}
-          value={state.selectedYear}
+          value={twin.simulationYear}
           onChange={(event) => onYear(Number(event.target.value))}
         />
-        <output>{state.selectedYear}</output>
+        <output>{twin.simulationYear}</output>
       </div>
-      <div className="wl-source-time-note">{sourceTimeNote(state)}</div>
+
+      {sourceTimeline.length > 0 && (
+        <div className="wl-source-timeline">
+          <label className="wl-timeline-label" htmlFor="worldline-source-year">SOURCE TIME</label>
+          <select id="worldline-source-year" value={twin.sourceYear} onChange={(event) => setSourceYear(Number(event.target.value))}>
+            {sourceTimeline.map((entry) => <option key={entry.id} value={entry.year}>{entry.year} · {entry.label}</option>)}
+          </select>
+          {sourceSelection && (
+            <div className="wl-source-time-note">
+              <strong>{sourceSelection.entry.epistemicClass}</strong>
+              <span>{sourceSelection.entry.note}</span>
+              <small>Source time is independent of simulation time. Gaps are not silently interpolated.</small>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="wl-segmented">
         {MODES.map((mode) => (
           <button key={mode} className={state.timeMode === mode ? 'active' : ''} onClick={() => onMode(mode)} type="button">
@@ -41,7 +66,7 @@ export function TimeNavigator({
           </button>
         ))}
       </div>
-      <p className="wl-help">Observation time, nearest-observation time, reconstruction time, and simulation time remain distinct. Time controls visualization; they do not rewrite committed state.</p>
+      <p className="wl-help">Observation time, reconstruction time, and simulation time remain distinct. The source selector inspects evidence history; the simulation slider moves the active worldline.</p>
     </section>
   );
 }

@@ -18,6 +18,7 @@ import { useDayNightCycle } from './hooks/useDayNightCycle';
 import { useProStatus } from './hooks/useProStatus';
 import { computeWorldStats } from './lib/stats';
 import { deriveWeather } from './lib/weather';
+import { createEarthRuntimeStatus } from './worldline/earthRuntime';
 import { createProviderRegistry, requestedProviderForWorld, resolveSurfaceProvider } from './worldline/providers';
 import { createInitialWorldlineState } from './worldline/state';
 import type { WorldlineState } from './worldline/types';
@@ -42,20 +43,21 @@ export default function App() {
   const { timeOfDay } = useDayNightCycle();
   const isPro = useProStatus();
   const [worldline, setWorldline] = useState<WorldlineState>(() => createInitialWorldlineState());
-  const [openEarthFailed, setOpenEarthFailed] = useState(false);
+  const [openEarthFailure, setOpenEarthFailure] = useState<string | null>(null);
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
   const weather = useMemo(() => (stats ? deriveWeather(stats) : 'clear' as const), [stats]);
-  const handleOpenEarthFailure = useCallback(() => setOpenEarthFailed(true), []);
+  const handleOpenEarthFailure = useCallback((reason: string) => setOpenEarthFailure(reason), []);
 
   const requestedProvider = requestedProviderForWorld(worldline.activeWorld.id);
   const networkAvailable = typeof navigator === 'undefined' ? true : navigator.onLine;
+  const activeEarthFailure = requestedProvider === 'open-earth-maplibre' ? openEarthFailure : null;
   const providerRegistry = useMemo(() => createProviderRegistry({
-    networkAvailable: networkAvailable && !openEarthFailed,
+    networkAvailable: networkAvailable && !(requestedProvider === 'open-earth-maplibre' && Boolean(openEarthFailure)),
     localNewBedfordAvailable: true,
     requested: requestedProvider,
-  }), [networkAvailable, openEarthFailed, requestedProvider]);
+  }), [networkAvailable, openEarthFailure, requestedProvider]);
   const providerStatus = resolveSurfaceProvider(providerRegistry, requestedProvider);
-  const fallbackActive = requestedProvider !== providerStatus.id;
+  const earthRuntime = createEarthRuntimeStatus(requestedProvider, providerStatus, activeEarthFailure);
 
   const temporalSnapshots = worldline.timeMode === 'PARALLAX'
     ? [
@@ -109,7 +111,7 @@ export default function App() {
   );
 
   const worldTools = worldline.activeWorld.id === 'new-bedford-001'
-    ? <div className="wl-real-world-tools"><p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. The procedural renderer remains the automatic fallback.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailed(false)}>Retry Open Earth provider</button></div>
+    ? <div className="wl-real-world-tools"><p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. Provider failures move to the procedural fallback without changing canonical branch state.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailure(null)}>Retry Open Earth provider</button></div>
     : generatedWorldTools;
 
   return (
@@ -120,7 +122,7 @@ export default function App() {
         scene={scene}
         worldTools={worldTools}
         providerStatus={providerStatus}
-        fallbackActive={fallbackActive}
+        earthRuntime={earthRuntime}
       />
       <PWAUpdatePrompt />
     </>

@@ -8,6 +8,7 @@ type MapLibreMap = {
   addSource: (id: string, source: unknown) => void;
   getLayer: (id: string) => unknown;
   addLayer: (layer: unknown) => void;
+  setProjection?: (projection: { type: string } | string) => void;
 };
 
 type MapLibreNamespace = {
@@ -21,6 +22,13 @@ declare global {
 const SCRIPT_ID = 'worldline-maplibre-script';
 const STYLE_ID = 'worldline-maplibre-style';
 const MAPLIBRE_VERSION = '5.7.1';
+
+export function chooseEarthProjection(
+  globeSupported: boolean,
+  requested: 'globe' | 'mercator' = 'globe',
+): 'globe' | 'mercator' {
+  return requested === 'globe' && globeSupported ? 'globe' : 'mercator';
+}
 
 function ensureMapLibre(): Promise<MapLibreNamespace> {
   if (window.maplibregl) return Promise.resolve(window.maplibregl);
@@ -57,6 +65,7 @@ export function OpenEarthView({
   zoom = 12.4,
   selectedYear = 2026,
   timeMode = 'SLICE',
+  projectionMode = 'globe',
   onReady,
   onFailure,
 }: {
@@ -64,6 +73,7 @@ export function OpenEarthView({
   zoom?: number;
   selectedYear?: number;
   timeMode?: TimeMode;
+  projectionMode?: 'globe' | 'mercator';
   onReady?: () => void;
   onFailure?: (reason: string) => void;
 }) {
@@ -85,6 +95,8 @@ export function OpenEarthView({
         attributionControl: true,
         antialias: true,
       });
+      const projection = chooseEarthProjection(typeof map.setProjection === 'function', projectionMode);
+      if (projection === 'globe') map.setProjection?.({ type: 'globe' });
       map.on('load', () => {
         if (!map || disposed) return;
         loaded = true;
@@ -127,7 +139,7 @@ export function OpenEarthView({
       disposed = true;
       map?.remove();
     };
-  }, [center[0], center[1], zoom, onFailure, onReady]);
+  }, [center[0], center[1], zoom, onFailure, onReady, projectionMode]);
 
   const temporalLayers = timeMode === 'PARALLAX'
     ? [Math.max(2023, selectedYear - 3), selectedYear, Math.min(2046, selectedYear + 5)]
@@ -139,7 +151,7 @@ export function OpenEarthView({
       {temporalLayers.length > 0 && <div className="wl-earth-parallax" aria-label="New Bedford Temporal Parallax layers">
         {temporalLayers.map((year, index) => <div key={`${year}-${index}`} className={`wl-earth-time-plane plane-${index}`}><span>{year}</span><small>{year <= 2023 ? 'OBSERVATION' : year <= 2025 ? 'NEAREST OBSERVATION' : year === 2026 ? 'RECONSTRUCTION' : 'SIMULATION'}</small></div>)}
       </div>}
-      <div className="wl-open-earth-caption">Open Earth · OpenFreeMap / OpenStreetMap · reconstructed geography</div>
+      <div className="wl-open-earth-caption">FREE EARTH · OpenFreeMap / OpenStreetMap · reconstructed geography</div>
     </div>
   );
 }
