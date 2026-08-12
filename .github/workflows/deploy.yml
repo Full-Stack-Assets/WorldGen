@@ -5,13 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Required for GitHub Pages via Actions
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Prevent overlapping deploys from cancelling each other's build artifacts
 concurrency:
   group: pages-deploy
   cancel-in-progress: false
@@ -40,6 +38,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE: /WorldGen/
+          VITE_GIT_SHA: ${{ github.sha }}
 
       - name: Verify build output
         run: test -f dist/index.html
