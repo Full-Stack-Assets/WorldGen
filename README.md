@@ -1,10 +1,30 @@
-# WorldGen
+# WorldGen / Worldline
+
+**WorldGen is now the canonical visual runtime for the Worldline master application.**
+
+Worldline wraps the procedural 3D engine in a provider-independent state, time, branching, Cosmos, comparison, and recursive-evaluation layer. The default experience is 3D space + navigable time with World, Time, Futures, Compare, Data, and Library surfaces plus an optional Mechanics inspector. The launch build remains credential-free; future Google/Cesium and benchmark integrations are adapters rather than hard dependencies.
+
+The current release includes deterministic branch/replay contracts, Temporal Parallax markers, a Chronos-inspired worldline trail, scalable future representations, Earth/extraterrestrial world classes, explicit epistemic/fidelity labels, and a bounded B+ recursive loop whose deciding evaluation contract cannot be changed by the candidate it evaluates.
+
+See [`docs/WORLDLINE_RUNTIME.md`](docs/WORLDLINE_RUNTIME.md) for the runtime and evidence contract.
 
 **Procedural 3D worlds with cinematic quality — infinite stories.**
 
 WorldGen transforms seeds into fully explorable 3D planets with terrain, oceans, settlements, rivers, lakes, and AI-powered lore. Built with Three.js for real-time rendering with sky, clouds, bloom, and atmospheric fog.
 
 **Live site:** [https://full-stack-assets.github.io/WorldGen/](https://full-stack-assets.github.io/WorldGen/)
+
+## Worldline surfaces
+
+- **World** — procedural generation and spatial exploration.
+- **Time** — Playback, Time Slice, Temporal Parallax, and Time Volume controls.
+- **Futures** — branches that scale into Future Families, landscapes, and Future Continents.
+- **Compare** — committed-snapshot Difference Lens.
+- **Data** — world metrics plus Planetary State and multi-part Habitability Landscape.
+- **Library** — Earth, New Bedford World #001, Mars, Europa, and generated exoworld families.
+- **Mechanics** — epistemic status, model fidelity, lineage, branch ancestry, and the constitutional recursive loop.
+
+Generated and simulated states are not presented as calibrated predictions. Observed, reconstructed, simulated, generated, and speculative content remain explicitly labeled.
 
 ## Features
 
@@ -16,12 +36,21 @@ WorldGen transforms seeds into fully explorable 3D planets with terrain, oceans,
 - Orbit camera with shadows and contact shadows
 - Glowing settlement markers (capitals, cities, towns, villages)
 - Animated selection rings on explored regions
+- Worldline trail and Temporal Parallax overlay markers
 
 ### World Generation
 - 8 world presets: Classic, Archipelago, Pangaea, Desert, Frozen, Volcanic, Eden, Alien
 - 15 biomes including lakes and rivers
 - Procedural settlements placed by suitability scoring
 - Seed-based reproducible worlds with shareable URLs
+
+### Worldline simulation layer
+- Canonical world state with immutable branch creation and replay
+- Explicit epistemic and model-fidelity labels
+- Deterministic future-family representation thresholds
+- Difference Lens across committed snapshots
+- Worldline Cosmos catalog with provider fallback semantics
+- B+ constitutional recursive evaluation demonstration with frozen deciding contracts
 
 ### AI & Lore
 - Region exploration with names, descriptions, lore, and quest hooks
@@ -34,7 +63,7 @@ WorldGen transforms seeds into fully explorable 3D planets with terrain, oceans,
 - Atlas dashboard with biome distribution, settlement list, and a clickable 2D minimap
 - Recent-worlds history to revisit past seeds
 - Biome Codex encyclopedia
-- Mobile-optimized collapsible panels
+- Mobile-optimized panels
 
 ### Progressive Web App
 - Installable and works fully offline — the app shell is precached and the 3D scene fetches no external assets at runtime
@@ -73,7 +102,8 @@ Get a free key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 | Orbit camera | Drag |
 | Zoom | Scroll / pinch |
 | Explore region | Click terrain |
-| Toggle panels | World / Region buttons |
+| Change Worldline surface | World / Time / Futures / Compare / Data / Library |
+| Inspect evidence/lineage | Mechanics |
 
 ## Share a World
 
@@ -88,49 +118,38 @@ https://full-stack-assets.github.io/WorldGen/?seed=7HD2P7
 
 ## Monetization (optional, for self-hosters)
 
-All channels are off by default — with no env vars set, no monetization UI renders and no third-party scripts load. Set any of these at build time to activate:
+All channels are off by default — with no env vars set, no monetization UI renders and no third-party scripts load. Existing environment switches remain supported even though the master Worldline shell does not foreground monetization controls.
 
 | Env var | Activates |
 |---------|-----------|
 | `VITE_SUPPORT_KOFI` | Ko-fi donation button (full URL) |
 | `VITE_SUPPORT_GITHUB_SPONSORS` | GitHub Sponsors button (full URL) |
 | `VITE_SUPPORT_PATREON` | Patreon button (full URL) |
-| `VITE_PRO_PRODUCT_URL` | "Get WorldGen Pro" checkout link (Gumroad / Lemon Squeezy product URL) |
-| `VITE_GUMROAD_PRODUCT_ID` | In-app license-key unlock for Pro (Gumroad license verification) |
-| `VITE_ADSENSE_CLIENT` + `VITE_ADSENSE_SLOT` | Google AdSense unit (hidden for Pro users) |
+| `VITE_PRO_PRODUCT_URL` | WorldGen Pro checkout link |
+| `VITE_GUMROAD_PRODUCT_ID` | In-app license-key unlock for Pro |
+| `VITE_ADSENSE_CLIENT` + `VITE_ADSENSE_SLOT` | Google AdSense unit |
 | `VITE_AFFILIATE_ENABLED` | Recommended-tools panel with affiliate links |
-
-For AdSense you must also commit an `ads.txt` to `public/` containing your publisher line (e.g. `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`) and have the site approved in your AdSense account. For GitHub Pages deploys, add these as repository Actions secrets/vars and pass them as `env` in `.github/workflows/deploy.yml`'s build step.
-
-### WorldGen Pro
-
-Pro is a real, license-gated upgrade tier:
-
-- **Ad-free** — configured AdSense units are hidden for Pro users
-- **Ultra-detail worlds** — unlocks High (256²) and Ultra (320²) grid resolutions
-- **Premium exports** — full-resolution heightmap PNG and top-down biome-map PNG
-
-Set up: create a product on [Gumroad](https://gumroad.com) with license keys enabled, then set `VITE_PRO_PRODUCT_URL` (the checkout link) and `VITE_GUMROAD_PRODUCT_ID` (the product id). Buyers paste their license key into the Pro panel; it's verified against Gumroad's license API and cached in the browser. Because this is a static client-only app, the gate is a good-faith unlock rather than hard DRM — everything Pro adds is additive and never degrades the free experience.
-
-### Affiliate program
-
-Set `VITE_AFFILIATE_ENABLED=true` to show a "Recommended Tools" panel, then edit `src/lib/affiliates.ts` to replace the starter links with your own tagged affiliate URLs (Amazon Associates, asset stores, engine referral programs, etc.). An FTC-style disclosure is always shown, and links use `rel="sponsored"`.
 
 ## Tech Stack
 
 - React 19 + TypeScript + Vite
 - Three.js + React Three Fiber + Drei
-- Postprocessing (bloom, vignette)
+- Postprocessing (bloom, vignette, chromatic aberration)
 - Custom Perlin noise procedural engine
-- Google Gemini API (optional)
+- Vitest deterministic state/branch/recursive verification
+- Google Gemini API (optional lore feature)
 
 ## Deploy
 
-GitHub Pages deploys automatically on push to `main` via GitHub Actions.
+GitHub Pages deploys automatically on push to `main` via GitHub Actions. The production build uses the procedural provider by default and does not require Google geospatial credentials.
 
 ```bash
 npm run build
 ```
+
+## Evidence boundary
+
+The current application is a deterministic visualization and simulation prototype. It does not claim calibrated future probabilities, forecasting accuracy, realistic interacting human populations, formal manifold geometry, validated extraterrestrial habitability, or unrestricted self-modification. External Earth/cosmos providers and 4D benchmark suites are future adapters with their own validation and licensing requirements.
 
 ## License
 
