@@ -1,5 +1,6 @@
 import { clusterFutureFamilies, selectFutureRepresentation } from '../../worldline/futures';
 import type { WorldlineState } from '../../worldline/types';
+import { FutureLandscape } from './FutureLandscape';
 
 export function FutureNavigator({
   state,
@@ -14,19 +15,20 @@ export function FutureNavigator({
   const branches = Object.values(state.branches);
   const representation = selectFutureRepresentation(branches.length);
   const families = clusterFutureFamilies(branches);
+  const showLandscape = representation === 'FAMILIES' || representation === 'LANDSCAPE' || representation === 'CONTINENTS';
 
   if (!simulationAttached) {
     return (
       <section className="wl-panel glass-panel">
         <div className="wl-panel-kicker">FUTURES</div>
         <h2>Simulation model not attached</h2>
-        <p className="wl-help">{state.activeWorld.name} can be explored as {state.activeWorld.epistemicClass.toLowerCase()} world state, but the v0.2 release does not attach the WorldGen branch metrics to this world. Future generation is disabled here rather than presenting unrelated synthetic metrics as a city or planetary forecast.</p>
+        <p className="wl-help">{state.activeWorld.name} can be explored as {state.activeWorld.epistemicClass.toLowerCase()} world state, but Worldline 1.0 does not attach the WorldGen branch metrics to this world. Future generation is disabled here rather than presenting unrelated synthetic metrics as a city or planetary forecast.</p>
       </section>
     );
   }
 
   return (
-    <section className="wl-panel glass-panel">
+    <section className={`wl-panel glass-panel ${showLandscape ? 'wl-futures-wide' : ''}`}>
       <div className="wl-panel-header">
         <div>
           <div className="wl-panel-kicker">FUTURES</div>
@@ -34,6 +36,7 @@ export function FutureNavigator({
         </div>
         <span className="wl-badge">{branches.length} worlds</span>
       </div>
+      {showLandscape && <FutureLandscape branches={branches} activeBranchId={state.activeBranchId} onSelectBranch={onSelectBranch} />}
       <div className="wl-branch-list">
         {branches.map((branch) => (
           <button key={branch.id} type="button" className={`wl-branch-card ${state.activeBranchId === branch.id ? 'active' : ''}`} onClick={() => onSelectBranch(branch.id)}>
@@ -46,7 +49,7 @@ export function FutureNavigator({
       <div className="wl-family-strip" aria-label="Future families">
         {families.map((family) => <span key={family.id}>{family.label} · {family.branchIds.length}</span>)}
       </div>
-      <p className="wl-help">Future geography is a visualization of discrete scenario similarity and reachability, not a calibrated probability map.</p>
+      <p className="wl-help">Future geography is a visualization of discrete scenario similarity and reachability. Landscape position and divergence are deterministic branch-metric projections, not calibrated probability.</p>
     </section>
   );
 }
