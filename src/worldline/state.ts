@@ -48,20 +48,21 @@ export function createBranch(state: WorldlineState, input: { label: string; atYe
   if (!parent) throw new Error('Active branch is missing');
   const eligibleSnapshots = parent.snapshots.filter((snapshot) => snapshot.year <= input.atYear);
   if (eligibleSnapshots.length === 0) throw new Error('Cannot branch before the first committed snapshot');
+  const actualForkYear = eligibleSnapshots[eligibleSnapshots.length - 1].year;
   const branchIndex = Object.keys(state.branches).length;
   const id = `branch-${branchIndex}-${input.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   const direction = branchIndex % 2 === 0 ? -1 : 1;
-  const sourceSnapshots = parent.snapshots.filter((snapshot) => snapshot.year >= eligibleSnapshots[eligibleSnapshots.length - 1].year);
-  const childSnapshots = sourceSnapshots.map((snapshot) => divergedSnapshot(snapshot, id, input.atYear, direction));
+  const sourceSnapshots = parent.snapshots.filter((snapshot) => snapshot.year >= actualForkYear);
+  const childSnapshots = sourceSnapshots.map((snapshot) => divergedSnapshot(snapshot, id, actualForkYear, direction));
   const child: BranchRecord = {
     id,
     label: input.label,
     parentId: parent.id,
-    forkYear: input.atYear,
+    forkYear: actualForkYear,
     seed: parent.seed + branchIndex * 7919,
     events: [{
       id: `${id}-event`,
-      year: input.atYear,
+      year: actualForkYear,
       type: 'scenario-intervention',
       label: direction > 0 ? 'Adaptive intervention' : 'Constraint shock',
       delta: { direction },
@@ -72,7 +73,7 @@ export function createBranch(state: WorldlineState, input: { label: string; atYe
     ...state,
     branches: { ...state.branches, [id]: child },
     activeBranchId: id,
-    selectedYear: input.atYear,
+    selectedYear: actualForkYear,
   };
 }
 
