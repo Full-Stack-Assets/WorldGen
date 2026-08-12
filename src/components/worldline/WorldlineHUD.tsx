@@ -1,6 +1,7 @@
+import type { WorldProject } from '../../worldline/studioProjects';
 import type { WorldlineState } from '../../worldline/types';
 
-export function WorldlineHUD({ state }: { state: WorldlineState }) {
+export function WorldlineHUD({ state, project }: { state: WorldlineState; project?: WorldProject }) {
   const branch = state.branches[state.activeBranchId];
   return (
     <div className="wl-hud glass-panel" aria-label="Worldline status">
@@ -12,6 +13,7 @@ export function WorldlineHUD({ state }: { state: WorldlineState }) {
         </div>
       </div>
       <div className="wl-hud-meta">
+        {project && <span className="wl-hud-project">STUDIO · {project.title}</span>}
         <span>{state.activeWorld.name}</span>
         <span>{state.selectedYear}</span>
         <span>{branch?.label ?? 'Baseline'}</span>
