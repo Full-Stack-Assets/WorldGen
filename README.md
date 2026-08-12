@@ -2,23 +2,24 @@
 
 **WorldGen is the canonical rendering/runtime repository for the Worldline master application.**
 
-Worldline v0.5 combines a credential-free procedural 3D runtime, free-first real-Earth mode, explicit provider health, twin source/simulation timelines, branching simulation, Cosmos, benchmark/export contracts, and a durable B+ Discovery Engine.
+Worldline v0.7 combines a credential-free procedural 3D runtime, free-first real-Earth mode, explicit provider health, twin source/simulation timelines, deterministic branching, a durable B+ Discovery Engine, expanded Cosmos, and a playable Chronos worldline slice.
 
 **Live production:** https://full-stack-assets.github.io/WorldGen/
 
-See [`docs/WORLDLINE_RUNTIME.md`](docs/WORLDLINE_RUNTIME.md), [`docs/WORLDLINE_V0.2.md`](docs/WORLDLINE_V0.2.md), [`docs/WORLDLINE_V0.3.md`](docs/WORLDLINE_V0.3.md), and [`docs/WORLDLINE_V0.5.md`](docs/WORLDLINE_V0.5.md).
+Release notes: [`v0.2`](docs/WORLDLINE_V0.2.md) · [`v0.3`](docs/WORLDLINE_V0.3.md) · [`v0.5`](docs/WORLDLINE_V0.5.md) · [`v0.7`](docs/WORLDLINE_V0.7.md)
 
-## Primary surfaces
+## Primary experience
 
 - **World** — procedural worlds or the free Open Earth view.
 - **Time** — Playback, Time Slice, Temporal Parallax, Time Volume, plus independent source-time inspection for New Bedford.
 - **Futures** — deterministic branches for worlds with an attached simulation model.
 - **Compare** — committed-state Difference Lens.
 - **Data** — simulation metrics, planetary state, source/provenance state.
-- **Library** — Earth, New Bedford World #001, Mars, Europa, generated/exoworld families, and Chronos export.
-- **Mechanics** — lineage, provenance, benchmark adapters, Discovery Engine receipts, Model Worldline, and constitutional gates.
+- **Library** — Earth, Moon, Mars, Venus, Europa, Titan, generated/exoworld families, and runtime-neutral exports.
+- **Mechanics** — provenance, benchmark adapters, Discovery Engine receipts, Model Worldline, and constitutional gates.
+- **Chronos** — secondary playable worldline arena using local deterministic gameplay state.
 
-Worldline explicitly separates `OBSERVED`, `RECONSTRUCTED`, `SIMULATED`, `GENERATED`, and `SPECULATIVE` state. A world's physical identity and its rendered surface can carry different epistemic classes.
+Worldline explicitly separates `OBSERVED`, `RECONSTRUCTED`, `SIMULATED`, `GENERATED`, and `SPECULATIVE` state. Celestial identity and rendered surface state can carry different epistemic classes.
 
 ## Free-first Earth
 
@@ -26,30 +27,11 @@ No Google, Cesium, Earth Engine, or paid geospatial credential is required. New 
 
 Provider health is explicit: `READY`, `DEGRADED`, `UNAVAILABLE`, or `FALLBACK`. When the initial network map cannot be established, Worldline falls back to the procedural Three.js renderer without changing canonical world identity, branch ancestry, or simulation state.
 
-The Truth Lens visually distinguishes observed/reconstructed/generated/simulated/speculative display state. Runtime provider IDs never become canonical branch or world IDs.
+`public/data/new-bedford/` contains the privacy-minimized New Bedford provenance package. Source time and simulation time are independent: inspecting a historical source snapshot does not rewrite a future simulation, and advancing simulation time does not invent an observation for a year with no source evidence.
 
-## New Bedford World #001
+## 3D / visual runtime
 
-`public/data/new-bedford/` contains a privacy-minimized real-city provenance package:
-
-- `manifest.json` — publisher/source/license/coverage/checksum/status/transformation metadata.
-- `snapshots.json` — source-time metadata separating observation, reconstruction, and simulation time.
-- `geometry.geojson` — a small derived geographic coverage artifact, not a parcel-owner dataset.
-
-The package references public City of New Bedford and MassGIS sources while excluding owner/address/person-level assessor information. New Bedford remains **RECONSTRUCTED**, not a complete photogrammetric or operational municipal digital twin.
-
-### Twin timelines
-
-New Bedford exposes independent clocks:
-
-- **SOURCE TIME** — packaged evidence snapshots.
-- **SIMULATION TIME** — the active Worldline branch from 2026 forward.
-
-Selecting evidence does not rewrite simulation state, and moving simulation time does not invent observations for missing years.
-
-## 3D / visual engine
-
-The procedural WorldGen runtime includes real-time terrain/biomes, ocean, sky, clouds, stars, fog, shadows, postprocessing, vegetation, settlements, reproducible seed generation, Web Worker generation, Temporal Parallax markers, and a luminous Chronos-style worldline trail.
+The procedural WorldGen renderer includes real-time terrain/biomes, water, sky, clouds, stars, fog, shadows, postprocessing, vegetation, settlements, deterministic seed generation, Web Worker generation, Temporal Parallax markers, and a luminous worldline trail.
 
 The Open Earth runtime adds geographic planet/city navigation and attempts 3D building extrusion from the available map building layer.
 
@@ -65,39 +47,41 @@ WorldGen Prime retains deterministic branch simulation and scalable future repre
 
 These are discrete scenario groupings, not calibrated probabilities. Worlds without an attached simulation model do not reuse WorldGen future metrics.
 
-## Cosmos
-
-Planetary state can represent radius, gravity, rotation/orbit periods, atmosphere, pressure context, temperature, radiation, illumination, light-time, reference frame, source-state metadata, surface-rendering class, and multiple habitability dimensions.
-
-Mars and Europa are represented as **observed celestial identities** while their current local visual surfaces remain explicitly **generated**. The exoworld family remains speculative.
-
-## Benchmark Lab
-
-Worldline provides deterministic compatibility/export contracts for 4DWorldBench-style temporal render sequences and Omni-WorldBench-style ordered interaction/state-transition traces.
-
-Benchmark receipts support `NOT_RUN`, `COMPLETED`, `FAILED`, and `INCOMPATIBLE`. Worldline refuses to attach an external benchmark score unless that benchmark was actually executed to completion. Adapter readiness is not benchmark success.
-
 ## v0.5 Discovery Engine
 
 The B+ loop is:
 
 `OBSERVE → DETECT → EXPLAIN → CHALLENGE → EXPERIMENT → BUILD → EXECUTE → COMPARE → VERIFY → PROMOTE/REJECT → MONITOR → REALITY WAKE → REOPEN`
 
-v0.5 adds a durable local research ledger. A source-conflict experiment is stored as immutable observation, anomaly, hypothesis, frozen evaluator, verification, promotion, and Reality Wake receipts. Generator and verifier identities remain separate.
+Research cycles persist locally as immutable observation, anomaly, hypothesis, frozen evaluator, independent verification, promotion, Reality Wake, and reopening receipts. History can be exported/imported as a versioned JSON ledger. Corrupt local history fails closed with an explicit warning.
 
-Research history persists locally in the browser and can be exported/imported as `worldline-research-ledger-v0.5.json`. Corrupt stored history fails closed with a warning; Worldline does not silently repair it or claim it was recovered. Resetting local history requires an explicit action.
-
-**Model Worldline** is derived directly from ledger receipts and exposes how an observation led to candidate hypotheses, which failed, which verifier evaluated them, which frozen contract decided the outcome, what was promoted, and whether a later observation reopened the decision.
+**Model Worldline** is derived from the research ledger and exposes the evidence/decision ancestry instead of maintaining a second hidden graph state.
 
 Only reversible low-risk rendering/data-normalization changes are eligible for automatic promotion. Architecture, policy, model, benchmark, authority, and scientific-claim changes remain gated.
 
-Reality Wake is phrased epistemically: **the set of futures consistent with current evidence changed**, not "the future changed."
+## v0.7 Chronos Paradigm
 
-## Chronos Bridge
+The secondary **CHRONOS** control opens a bounded playable arena. The pure gameplay kernel records movement samples, anchors an exact temporal boundary, creates an Echo from the exact post-anchor recorded samples, detects deterministic spatial convergence, and supports a fixed reset.
 
-The Library can export a deterministic provider-independent Chronos interchange package containing world identity, spatial reference, selected time, branch ancestry, events, metrics, seeds, evidence/fidelity labels, and replay commitments.
+Chronos is explicitly labeled as a **fictional gameplay mechanic inspired by worldline/spacetime concepts**. Echo is exact replay, not an AI companion, and the arena does not mutate canonical Worldline simulation state.
 
-This prepares a future higher-fidelity Chronos runtime without pretending the browser application already contains a shipping Unreal game.
+## v0.7 Cosmos
+
+The catalog now includes WorldGen Prime, New Bedford/Earth, Moon, Mars, Venus, Europa, Titan, and three Asterion candidate variants.
+
+Moon, Mars, Venus, Europa, and Titan are **OBSERVED celestial identities** while the current local browser surface remains explicitly **GENERATED**. Planetary state separately records terrain-source status, surface-rendering class, gravity/mass/radius, rotation/orbit, atmosphere/pressure description, temperature/radiation/illumination context, light-time, reference frame, evidence references, and habitability dimensions.
+
+Asterion is deliberately synthetic. Its thin, temperate, and dense-atmosphere variants share one speculative world family rather than pretending there is one known exoplanet surface.
+
+## Benchmark Lab
+
+Worldline provides deterministic compatibility/export contracts for 4DWorldBench-style temporal render sequences and Omni-WorldBench-style ordered interaction/state-transition traces. Adapter readiness is not benchmark success, and no external benchmark score is shown without an executed receipt.
+
+## Chronos Bridge v0.7
+
+The Library exports a deterministic provider-independent `worldline-chronos-v0.7` bundle containing world identity, epistemic/rendering class, family/variant metadata, spatial/reference-frame state, terrain-source status, selected time, branch ancestry, events, metrics, seeds, and replay commitments.
+
+This is an interchange contract for future higher-fidelity runtimes, not a claim of a shipping Unreal/Cesium game.
 
 ## Quick start
 
@@ -120,11 +104,11 @@ CI runs the same gates on pull requests and `main`. GitHub Pages deploys automat
 
 ## Optional AI lore
 
-The original Gemini-powered lore feature remains optional. The simulation/Earth/Discovery Engine does not require an AI key.
+The original Gemini-powered lore feature remains optional. Earth, Cosmos, Chronos, branching, and the Discovery Engine do not require an AI key.
 
 ## Evidence boundary
 
-Worldline v0.5 does not claim calibrated future probabilities, forecasting accuracy, a fully validated New Bedford digital twin, realistic interacting populations, formal manifold geometry, executed external benchmark scores without receipts, observed exoplanet surfaces without evidence, or unrestricted self-modification. Open data/providers are visual/evidence substrates; canonical Worldline state remains provider-independent.
+Worldline v0.7 does not claim calibrated future probabilities, forecasting accuracy, a fully validated New Bedford digital twin, realistic interacting populations, formal manifold geometry, executed external benchmark scores without receipts, observed exoplanet surfaces without evidence, physically real Chronos abilities, or unrestricted self-modification. Open data/providers and NASA reference metadata inform visual/evidence state; canonical Worldline state remains provider-independent.
 
 ## License
 
