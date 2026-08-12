@@ -10,9 +10,21 @@ export function FutureNavigator({
   onCreateBranch: () => void;
   onSelectBranch: (branchId: string) => void;
 }) {
+  const simulationAttached = state.activeWorld.id === 'worldgen-prime';
   const branches = Object.values(state.branches);
   const representation = selectFutureRepresentation(branches.length);
   const families = clusterFutureFamilies(branches);
+
+  if (!simulationAttached) {
+    return (
+      <section className="wl-panel glass-panel">
+        <div className="wl-panel-kicker">FUTURES</div>
+        <h2>Simulation model not attached</h2>
+        <p className="wl-help">{state.activeWorld.name} can be explored as {state.activeWorld.epistemicClass.toLowerCase()} world state, but the v0.2 release does not attach the WorldGen branch metrics to this world. Future generation is disabled here rather than presenting unrelated synthetic metrics as a city or planetary forecast.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="wl-panel glass-panel">
       <div className="wl-panel-header">
