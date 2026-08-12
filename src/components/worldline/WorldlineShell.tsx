@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { createBranch, selectBranch, selectWorld, selectYear } from '../../worldline/state';
+import type { EarthRuntimeStatus } from '../../worldline/earthRuntime';
 import type { ProviderStatus } from '../../worldline/providers';
 import type { TimeMode, WorldlineState } from '../../worldline/types';
 import { ComparePanel } from './ComparePanel';
@@ -23,14 +24,14 @@ export function WorldlineShell({
   scene,
   worldTools,
   providerStatus,
-  fallbackActive,
+  earthRuntime,
 }: {
   state: WorldlineState;
   onStateChange: (next: WorldlineState) => void;
   scene: ReactNode;
   worldTools: ReactNode;
   providerStatus: ProviderStatus;
-  fallbackActive: boolean;
+  earthRuntime: EarthRuntimeStatus;
 }) {
   const [surface, setSurface] = useState<WorldlineSurface>('WORLD');
   const [mechanicsOpen, setMechanicsOpen] = useState(false);
@@ -46,7 +47,7 @@ export function WorldlineShell({
       <div className={`wl-atmosphere wl-atmosphere-${state.activeWorld.kind.toLowerCase()}`} aria-hidden="true" />
       <div className="wl-interface">
         <WorldlineHUD state={state} />
-        <ProviderStatusStrip state={state} provider={providerStatus} fallbackActive={fallbackActive} />
+        <ProviderStatusStrip state={state} provider={providerStatus} runtimeStatus={earthRuntime} />
         <nav className="wl-nav glass-panel" aria-label="Worldline primary navigation">
           {NAV_ITEMS.map((item) => <button type="button" key={item} className={surface === item ? 'active' : ''} onClick={() => setSurface(item)}>{item}</button>)}
           <TruthLens active={truthLens} onToggle={() => setTruthLens((value) => !value)} />
