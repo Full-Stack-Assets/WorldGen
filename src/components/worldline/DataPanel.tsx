@@ -5,16 +5,21 @@ export function DataPanel({ state }: { state: WorldlineState }) {
   const snapshots = branch?.snapshots ?? [];
   const nearest = [...snapshots].sort((a, b) => Math.abs(a.year - state.selectedYear) - Math.abs(b.year - state.selectedYear))[0];
   const planetary = state.activeWorld.planetary;
+  const hasCommittedMetrics = state.activeWorld.id === 'worldgen-prime' && nearest?.worldId === 'worldgen-prime';
 
   return (
     <section className="wl-panel glass-panel">
       <div className="wl-panel-kicker">DATA</div>
       <h2>{state.activeWorld.name}</h2>
-      <div className="wl-compare-grid">
-        {nearest && Object.entries(nearest.metrics).map(([key, value]) => (
-          <div className="wl-metric" key={key}><span>{key}</span><strong>{value.toLocaleString()}</strong><small>nearest committed slice · {nearest.year}</small></div>
-        ))}
-      </div>
+      {hasCommittedMetrics ? (
+        <div className="wl-compare-grid">
+          {Object.entries(nearest.metrics).map(([key, value]) => (
+            <div className="wl-metric" key={key}><span>{key}</span><strong>{value.toLocaleString()}</strong><small>nearest committed WorldGen slice · {nearest.year}</small></div>
+          ))}
+        </div>
+      ) : (
+        <p className="wl-help">No committed simulation-metric series is attached to this world in the launch fixture. Planetary metadata below remains separate from the WorldGen branch simulation.</p>
+      )}
       {planetary && (
         <div className="wl-planetary-state">
           <h3>Planetary State</h3>
