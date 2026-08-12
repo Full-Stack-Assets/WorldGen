@@ -1,6 +1,7 @@
 import type { WorldlineState } from '../../worldline/types';
 import { BenchmarkLab } from './BenchmarkLab';
 import { RecursiveLoopPanel } from './RecursiveLoopPanel';
+import { ReleaseStatus } from './ReleaseStatus';
 
 export function MechanicsPanel({ state }: { state: WorldlineState }) {
   const branch = state.branches[state.activeBranchId];
@@ -19,6 +20,7 @@ export function MechanicsPanel({ state }: { state: WorldlineState }) {
         <div><dt>Fork year</dt><dd>{branch?.forkYear}</dd></div>
         <div><dt>Seed</dt><dd>{branch?.seed}</dd></div>
       </dl>
+      <ReleaseStatus />
       <BenchmarkLab state={state} />
       <RecursiveLoopPanel />
     </section>
