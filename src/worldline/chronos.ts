@@ -1,14 +1,19 @@
 import type { BranchRecord, WorldlineState } from './types';
 
 export interface ChronosExportBundle {
-  schema: 'worldline-chronos-v0.2';
+  schema: 'worldline-chronos-v0.7';
   world: {
     id: string;
     kind: string;
     epistemicClass: string;
     surfaceEpistemicClass: string;
+    surfaceRenderingClass: string;
     fidelity: string;
     spatialReference: string;
+    referenceFrame: string;
+    terrainSourceStatus: string;
+    familyId: string | null;
+    variantId: string | null;
   };
   selectedYear: number;
   activeBranchId: string;
@@ -44,15 +49,22 @@ export function createChronosExport(state: WorldlineState): ChronosExportBundle 
       })),
     }));
   const replayCommitment = branches.map((branch) => `${branch.id}:${branch.snapshots.map((snapshot) => snapshot.commitment).join(',')}`).join('|');
+  const planetary = state.activeWorld.planetary;
+  const surfaceEpistemicClass = state.activeWorld.surfaceEpistemicClass ?? state.activeWorld.epistemicClass;
   return {
-    schema: 'worldline-chronos-v0.2',
+    schema: 'worldline-chronos-v0.7',
     world: {
       id: state.activeWorld.id,
       kind: state.activeWorld.kind,
       epistemicClass: state.activeWorld.epistemicClass,
-      surfaceEpistemicClass: state.activeWorld.surfaceEpistemicClass ?? state.activeWorld.epistemicClass,
+      surfaceEpistemicClass,
+      surfaceRenderingClass: planetary?.surfaceRenderingClass ?? surfaceEpistemicClass,
       fidelity: state.activeWorld.fidelity,
       spatialReference: state.activeWorld.spatialReference ?? 'UNSPECIFIED',
+      referenceFrame: planetary?.referenceFrame ?? 'UNSPECIFIED',
+      terrainSourceStatus: planetary?.terrainSourceStatus ?? 'UNSPECIFIED',
+      familyId: state.activeWorld.familyId ?? null,
+      variantId: state.activeWorld.variantId ?? null,
     },
     selectedYear: state.selectedYear,
     activeBranchId: state.activeBranchId,
