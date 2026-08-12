@@ -11,6 +11,7 @@ import { ExportPanel } from './components/ExportPanel';
 import { Minimap } from './components/Minimap';
 import { HistoryPanel } from './components/HistoryPanel';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
+import { FirstContact } from './components/worldline/FirstContact';
 import { OpenEarthView } from './components/worldline/OpenEarthView';
 import { WorldlineShell } from './components/worldline/WorldlineShell';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
@@ -19,10 +20,23 @@ import { useProStatus } from './hooks/useProStatus';
 import { computeWorldStats } from './lib/stats';
 import { deriveWeather } from './lib/weather';
 import { createEarthRuntimeStatus } from './worldline/earthRuntime';
+import { FIRST_CONTACT_STORAGE_KEY, shouldShowFirstContact } from './worldline/firstContact';
 import { createProviderRegistry, requestedProviderForWorld, resolveSurfaceProvider } from './worldline/providers';
 import { createInitialWorldlineState } from './worldline/state';
 import type { WorldlineState } from './worldline/types';
 import './styles/index.css';
+
+function reducedMotionPreferred(): boolean {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+}
+
+function initialFirstContactVisibility(): boolean {
+  if (typeof window === 'undefined') return false;
+  const seen = window.localStorage.getItem(FIRST_CONTACT_STORAGE_KEY) === 'seen';
+  return shouldShowFirstContact({ reducedMotion: reducedMotionPreferred(), seen });
+}
 
 export default function App() {
   const {
@@ -44,9 +58,17 @@ export default function App() {
   const isPro = useProStatus();
   const [worldline, setWorldline] = useState<WorldlineState>(() => createInitialWorldlineState());
   const [openEarthFailure, setOpenEarthFailure] = useState<string | null>(null);
+  const [firstContactVisible, setFirstContactVisible] = useState(initialFirstContactVisibility);
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
   const weather = useMemo(() => (stats ? deriveWeather(stats) : 'clear' as const), [stats]);
   const handleOpenEarthFailure = useCallback((reason: string) => setOpenEarthFailure(reason), []);
+  const completeFirstContact = useCallback(() => {
+    setFirstContactVisible(false);
+    if (typeof window !== 'undefined') window.localStorage.setItem(FIRST_CONTACT_STORAGE_KEY, 'seen');
+  }, []);
+  const replayFirstContact = useCallback(() => {
+    if (!reducedMotionPreferred()) setFirstContactVisible(true);
+  }, []);
 
   const requestedProvider = requestedProviderForWorld(worldline.activeWorld.id);
   const networkAvailable = typeof navigator === 'undefined' ? true : navigator.onLine;
@@ -87,8 +109,11 @@ export default function App() {
     ? <ErrorBoundary fallbackTitle="Open Earth rendering failed"><OpenEarthView selectedYear={worldline.selectedYear} timeMode={worldline.timeMode} onFailure={handleOpenEarthFailure} /></ErrorBoundary>
     : proceduralScene;
 
+  const replayControl = <button className="wl-secondary wl-replay-intro" type="button" onClick={replayFirstContact}>Replay First Contact</button>;
+
   const generatedWorldTools = (
     <div className="wl-legacy-tools">
+      {replayControl}
       <PresetGallery disabled={generating} onSelect={(preset) => updateConfig(preset)} />
       <ControlPanel
         config={config}
@@ -111,7 +136,7 @@ export default function App() {
   );
 
   const worldTools = worldline.activeWorld.id === 'new-bedford-001'
-    ? <div className="wl-real-world-tools"><p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. Provider failures move to the procedural fallback without changing canonical branch state.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailure(null)}>Retry Open Earth provider</button></div>
+    ? <div className="wl-real-world-tools">{replayControl}<p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. Provider failures move to the procedural fallback without changing canonical branch state.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailure(null)}>Retry Open Earth provider</button></div>
     : generatedWorldTools;
 
   return (
@@ -124,6 +149,7 @@ export default function App() {
         providerStatus={providerStatus}
         earthRuntime={earthRuntime}
       />
+      {firstContactVisible && <FirstContact onComplete={completeFirstContact} />}
       <PWAUpdatePrompt />
     </>
   );
