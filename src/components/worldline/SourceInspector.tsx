@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadNewBedfordManifest, type WorldDataManifest } from '../../worldline/provenance';
+import { getSourceTimelineForWorld } from '../../worldline/sourceTimeline';
 
 export function SourceInspector({ worldId }: { worldId: string }) {
   const [manifest, setManifest] = useState<WorldDataManifest | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const timeline = useMemo(() => getSourceTimelineForWorld(worldId), [worldId]);
 
   useEffect(() => {
     let active = true;
@@ -29,6 +31,11 @@ export function SourceInspector({ worldId }: { worldId: string }) {
           {manifest.sources.map((source) => <article key={source.sourceId}><strong>{source.datasetName}</strong><small>{source.publisher}</small><span>{source.epistemicClass} · {source.resolution}</span><code>{source.sourceId}</code></article>)}
         </div>
       </>}
+      <h3>Source-Time History</h3>
+      <div className="wl-source-list">
+        {timeline.map((entry) => <article key={entry.id}><strong>{entry.year} · {entry.label}</strong><span>{entry.epistemicClass}</span><small>{entry.note}</small></article>)}
+      </div>
+      <p className="wl-help">No live municipal operations feed is attached in v0.3. These entries describe packaged evidence snapshots and reconstruction state, not continuous observation.</p>
     </section>
   );
 }
