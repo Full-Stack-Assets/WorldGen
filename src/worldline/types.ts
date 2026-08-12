@@ -5,6 +5,7 @@ export type TimeMode = 'PLAYBACK' | 'SLICE' | 'PARALLAX' | 'VOLUME';
 
 export interface PlanetaryState {
   gravityG: number;
+  massEarths?: number;
   radiusKm?: number;
   rotationPeriodHours?: number;
   orbitalPeriodDays?: number;
@@ -13,6 +14,8 @@ export interface PlanetaryState {
   temperature: string;
   radiation: string;
   illumination: string;
+  terrainSourceStatus?: string;
+  surfaceRenderingClass?: EpistemicClass;
   lightTime: string;
   referenceFrame?: string;
   physicalStateSources?: string[];
@@ -33,6 +36,8 @@ export interface WorldRecord {
   fidelity: ModelFidelity;
   provider: string;
   spatialReference?: string;
+  familyId?: string;
+  variantId?: string;
   description: string;
   planetary?: PlanetaryState;
 }
