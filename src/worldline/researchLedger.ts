@@ -1,4 +1,4 @@
-import type { ResearchCycle, ResearchPromotion, ResearchVerifierReceipt } from './researchLoop';
+import type { ReopenRecord, ResearchCycle, ResearchPromotion, ResearchVerifierReceipt } from './researchLoop';
 
 export type ResearchLedgerEntry =
   | { id: string; kind: 'OBSERVATION'; observationId: string; conflictDetected: boolean }
@@ -81,6 +81,21 @@ export function appendResearchCycle(ledger: ResearchLedger, cycle: ResearchCycle
   return {
     schemaVersion: ledger.schemaVersion,
     entries: [...ledger.entries.map((entry) => structuredClone(entry)), ...additions.filter((entry) => !existingIds.has(entry.id))],
+  };
+}
+
+export function appendReopenRecord(ledger: ResearchLedger, observationId: string, reopen: ReopenRecord): ResearchLedger {
+  if (ledger.entries.some((entry) => entry.id === reopen.id)) return structuredClone(ledger);
+  return {
+    schemaVersion: ledger.schemaVersion,
+    entries: [...ledger.entries.map((entry) => structuredClone(entry)), {
+      id: reopen.id,
+      kind: 'REOPEN',
+      observationId,
+      decisionId: reopen.decisionId,
+      triggeringObservationId: reopen.triggeringObservationId,
+      reason: reopen.reason,
+    }],
   };
 }
 
