@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { WorldScene3D } from './components/three/WorldScene3D';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ControlPanel } from './components/ControlPanel';
@@ -45,13 +45,15 @@ export default function App() {
   const [openEarthFailed, setOpenEarthFailed] = useState(false);
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
   const weather = useMemo(() => (stats ? deriveWeather(stats) : 'clear' as const), [stats]);
+  const handleOpenEarthFailure = useCallback(() => setOpenEarthFailed(true), []);
 
   const requestedProvider = requestedProviderForWorld(worldline.activeWorld.id);
+  const networkAvailable = typeof navigator === 'undefined' ? true : navigator.onLine;
   const providerRegistry = useMemo(() => createProviderRegistry({
-    networkAvailable: !openEarthFailed,
+    networkAvailable: networkAvailable && !openEarthFailed,
     localNewBedfordAvailable: true,
     requested: requestedProvider,
-  }), [openEarthFailed, requestedProvider]);
+  }), [networkAvailable, openEarthFailed, requestedProvider]);
   const providerStatus = resolveSurfaceProvider(providerRegistry, requestedProvider);
   const fallbackActive = requestedProvider !== providerStatus.id;
 
@@ -80,7 +82,7 @@ export default function App() {
   );
 
   const scene = worldline.activeWorld.id === 'new-bedford-001' && providerStatus.id === 'open-earth-maplibre'
-    ? <ErrorBoundary fallbackTitle="Open Earth rendering failed"><OpenEarthView onFailure={() => setOpenEarthFailed(true)} /></ErrorBoundary>
+    ? <ErrorBoundary fallbackTitle="Open Earth rendering failed"><OpenEarthView selectedYear={worldline.selectedYear} timeMode={worldline.timeMode} onFailure={handleOpenEarthFailure} /></ErrorBoundary>
     : proceduralScene;
 
   const generatedWorldTools = (
