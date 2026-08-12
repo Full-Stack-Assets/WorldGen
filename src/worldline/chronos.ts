@@ -1,0 +1,66 @@
+import type { BranchRecord, WorldlineState } from './types';
+
+export interface ChronosExportBundle {
+  schema: 'worldline-chronos-v0.2';
+  world: {
+    id: string;
+    kind: string;
+    epistemicClass: string;
+    surfaceEpistemicClass: string;
+    fidelity: string;
+    spatialReference: string;
+  };
+  selectedYear: number;
+  activeBranchId: string;
+  branches: Array<{
+    id: string;
+    parentId: string | null;
+    forkYear: number;
+    seed: number;
+    events: BranchRecord['events'];
+    snapshots: Array<{ year: number; commitment: string; eventIds: string[]; metrics: Record<string, number> }>;
+  }>;
+  replayCommitment: string;
+}
+
+function sortedMetrics(metrics: Record<string, number>): Record<string, number> {
+  return Object.fromEntries(Object.entries(metrics).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+export function createChronosExport(state: WorldlineState): ChronosExportBundle {
+  const branches = Object.values(state.branches)
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((branch) => ({
+      id: branch.id,
+      parentId: branch.parentId,
+      forkYear: branch.forkYear,
+      seed: branch.seed,
+      events: [...branch.events].sort((a, b) => a.year - b.year || a.id.localeCompare(b.id)).map((event) => ({ ...event, delta: sortedMetrics(event.delta) })),
+      snapshots: [...branch.snapshots].sort((a, b) => a.year - b.year || a.id.localeCompare(b.id)).map((snapshot) => ({
+        year: snapshot.year,
+        commitment: snapshot.commitment,
+        eventIds: [...snapshot.eventIds].sort(),
+        metrics: sortedMetrics(snapshot.metrics),
+      })),
+    }));
+  const replayCommitment = branches.map((branch) => `${branch.id}:${branch.snapshots.map((snapshot) => snapshot.commitment).join(',')}`).join('|');
+  return {
+    schema: 'worldline-chronos-v0.2',
+    world: {
+      id: state.activeWorld.id,
+      kind: state.activeWorld.kind,
+      epistemicClass: state.activeWorld.epistemicClass,
+      surfaceEpistemicClass: state.activeWorld.surfaceEpistemicClass ?? state.activeWorld.epistemicClass,
+      fidelity: state.activeWorld.fidelity,
+      spatialReference: state.activeWorld.spatialReference ?? 'UNSPECIFIED',
+    },
+    selectedYear: state.selectedYear,
+    activeBranchId: state.activeBranchId,
+    branches,
+    replayCommitment,
+  };
+}
+
+export function serializeChronosExport(bundle: ChronosExportBundle): string {
+  return JSON.stringify(bundle, null, 2);
+}

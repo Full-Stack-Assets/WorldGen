@@ -5,11 +5,17 @@ export type TimeMode = 'PLAYBACK' | 'SLICE' | 'PARALLAX' | 'VOLUME';
 
 export interface PlanetaryState {
   gravityG: number;
+  radiusKm?: number;
+  rotationPeriodHours?: number;
+  orbitalPeriodDays?: number;
   atmosphere: string;
+  surfacePressure?: string;
   temperature: string;
   radiation: string;
   illumination: string;
   lightTime: string;
+  referenceFrame?: string;
+  physicalStateSources?: string[];
   habitability: {
     microbial: string;
     complexLife: string;
@@ -23,8 +29,10 @@ export interface WorldRecord {
   name: string;
   kind: WorldKind;
   epistemicClass: EpistemicClass;
+  surfaceEpistemicClass?: EpistemicClass;
   fidelity: ModelFidelity;
   provider: string;
+  spatialReference?: string;
   description: string;
   planetary?: PlanetaryState;
 }

@@ -4,25 +4,59 @@ Worldline is the master visual simulation application built on the WorldGen rend
 
 ## Runtime contract
 
-The application separates committed simulation state from presentation. `src/worldline/` owns world identity, epistemic class, model fidelity, branch ancestry, snapshots, future representation thresholds, and recursive candidate policy. React/Three.js components project that state; changing a lens, camera, renderer, or provider must not mutate committed state.
+Committed simulation/world state is separate from presentation. `src/worldline/` owns world identity, epistemic class, model fidelity, branch ancestry, snapshots, provider policy, provenance, benchmark receipts, recursive-candidate policy, and runtime interchange. React rendering components project that state. Changing a camera, lens, tile provider, map style, or renderer must not mutate canonical state.
 
 ## Visible modes
 
-Primary surfaces are World, Time, Futures, Compare, Data, and Library. Mechanics is the secondary evidence/lineage inspector. Temporal modes are Playback, Time Slice, Temporal Parallax, and Time Volume.
+Primary surfaces remain World, Time, Futures, Compare, Data, and Library. Mechanics is the evidence/lineage/benchmark inspector. Temporal modes are Playback, Time Slice, Temporal Parallax, and Time Volume.
+
+## v0.2 free-first Earth provider model
+
+Worldline v0.2 does not require Google, Cesium, or Earth Engine credentials.
+
+- `procedural-worldgen` is the guaranteed credential-free/offline fallback.
+- `open-earth-maplibre` is the free network Earth view using MapLibre at runtime with OpenFreeMap/OpenStreetMap-derived geography.
+- `local-new-bedford` represents the versioned static New Bedford provenance/data package.
+- `google-photorealistic` remains an optional adapter and is not a release gate.
+
+The Open Earth runtime loads MapLibre from a pinned public CDN at runtime instead of making it a build dependency. This is an intentional v0.2 tradeoff: the production bundle still builds without adding a paid provider or new package-install dependency, while network failure is handled by the existing procedural fallback. A later release may vendor/self-host MapLibre and tiles for stricter offline Earth support.
+
+OpenFreeMap/OpenStreetMap provider attribution remains visible. External tile IDs never become Worldline world or branch IDs.
 
 ## World and truth classes
 
 Epistemic classes are `OBSERVED`, `RECONSTRUCTED`, `SIMULATED`, `GENERATED`, and `SPECULATIVE`. Model-fidelity labels are `FIELD`, `COHORT`, `MICROSIM`, `AGENT`, `INTERACTING_AGENT`, `COGNITIVE_AGENT`, and `EXPERIENTIAL_MODEL`.
 
-The procedural renderer is a visual fallback and does not change a world's epistemic class. Mars can therefore remain `OBSERVED` while using procedural fallback geometry that is explicitly labeled as such. An exoworld generated from hypothetical constraints remains `SPECULATIVE`.
+v0.2 adds an explicit rendered-surface class. An observed body can therefore use generated local geometry without the interface implying that the rendered surface itself was observed. Mars and Europa use this distinction. The Truth Lens exposes epistemic rendering status without rewriting underlying state.
+
+## New Bedford World #001
+
+New Bedford is the first real-Earth proving ground. The repository contains a versioned static package at `public/data/new-bedford/` with:
+
+- a strict provenance manifest;
+- source-time snapshot metadata;
+- a small derived geographic coverage artifact;
+- source references for City of New Bedford and MassGIS public datasets.
+
+The package intentionally excludes owner/address/person-level assessor data. Several MassGIS sources are metadata references only in v0.2; their full imagery/building/parcel datasets are not redistributed by this repository. The Open Earth map provides live geographic context when reachable. This combination is labeled `RECONSTRUCTED`, not a complete observed/photogrammetric digital twin.
+
+Source validators require publisher, dataset name, URL, retrieval time, spatial reference, license/usage note, checksum/status, coverage, resolution, epistemic class, and transformation lineage before a source can enter the canonical package.
+
+## Historical/source time
+
+The Time surface distinguishes observation time, nearest-observation time, reconstruction time, and simulation time. New Bedford source metadata currently exposes 2023 parcel-service baseline metadata, 2025 MassGIS aerial-source metadata, a 2026 reconstructed Worldline view, and later simulated time. Missing years are not silently claimed as direct observations.
+
+Temporal Parallax in the Open Earth view shows distinct source/simulation planes while keeping those time classes labeled.
 
 ## Deterministic state and branching
 
-The launch fixture contains a deterministic root worldline with committed snapshots and metric state. `createBranch` creates an isolated child from the nearest prior committed snapshot without mutating the parent. `replayBranch` returns the committed branch history. `compareSnapshots` computes a Difference Lens without changing either input.
+The WorldGen launch fixture retains deterministic committed snapshots. `createBranch` creates isolated children from an actual committed snapshot without mutating the parent. `replayBranch` returns committed branch history. `compareSnapshots` computes differences without changing inputs.
+
+The v0.2 UI does not attach these WorldGen branch metrics to New Bedford, Mars, Europa, or exoworlds. Future generation is disabled for worlds without an attached simulation model rather than presenting unrelated synthetic metrics as forecasts.
 
 ## Future representation
 
-The interface scales branch representation by count:
+WorldGen branch visualization scales by count:
 
 - 1–2: direct comparison
 - 3–4: individual worldlines
@@ -30,32 +64,42 @@ The interface scales branch representation by count:
 - 51–10,000: Future Landscape
 - 10,001+: Future Continents
 
-These are visualization groupings over discrete scenario state, not calibrated probability surfaces.
+These remain visualization groupings over discrete scenario state, not calibrated probability surfaces.
 
-## Worldline Cosmos
+## Cosmos v0.2
 
-The launch catalog includes a generated WorldGen world, New Bedford World #001 as a reconstructed real-city shell with real-data adapter pending, Mars and Europa as observed planetary identities with procedural visual fallback, and a speculative generated exoworld family. Planetary State exposes gravity, atmosphere, temperature, radiation, illumination, light-time, and multiple habitability dimensions without collapsing them into one authoritative score.
+Planetary state can now carry radius, gravity, rotation period, orbital period, atmosphere, pressure description, temperature, radiation, illumination, light-time, reference-frame metadata, physical-state source notes, and multiple habitability dimensions.
 
-## Recursive engine
+Observed physical identity and rendered surface provenance are separate. The current exoworld remains a speculative candidate family rather than an asserted observed planet surface.
 
-The B+ constitutional loop is implemented as a deterministic local demonstration:
+## Benchmark Lab
+
+`src/worldline/benchmarks.ts` provides deterministic compatibility/export contracts for 4DWorldBench-style temporal render bundles and Omni-WorldBench-style interaction/state-transition traces. Benchmark receipts support `NOT_RUN`, `COMPLETED`, `FAILED`, and `INCOMPATIBLE`.
+
+Worldline refuses to attach a score to a non-completed benchmark receipt. v0.2 therefore exposes adapter readiness without fabricating benchmark success.
+
+## Recursive Research Engine
+
+The B+ constitutional loop remains:
 
 `OBSERVE → DETECT → EXPLAIN → CHALLENGE → EXPERIMENT → BUILD → EXECUTE → COMPARE → VERIFY → PROMOTE/REJECT → MONITOR → REALITY WAKE → REOPEN`
 
-A frozen evaluation contract is created before candidate generation. Candidate evaluation and independent verification reference that immutable contract ID. Low-risk reversible machine-verifiable candidates can be marked auto-promotable; architectural candidates remain approval-gated. The candidate generator cannot replace the test deciding its own promotion.
+v0.2 adds a concrete data-update/reconciliation cycle. It creates a frozen evaluator before candidate generation, records generator and independent-verifier identities, compares multiple reconciliation candidates, rejects candidates that drift the evaluator or fail thresholds, stores rollback references, and permits automatic promotion only for explicitly reversible low-risk rendering/data-normalization candidates. Architectural/policy/model/scientific-claim changes remain gated.
 
-This is a bounded demonstration of recursive improvement policy, not unrestricted self-modification.
+Reality Wake wording is intentionally epistemic: `The set of futures consistent with current evidence changed.`
 
-## External provider adapters
+## Chronos Bridge
 
-The launch application requires no Google credentials. The intended Earth adapter boundary supports future Cesium/Google Photorealistic 3D Tiles and Earth Engine integrations where credentials and terms permit. External provider IDs must never become canonical Worldline state IDs.
+`src/worldline/chronos.ts` exports a deterministic provider-independent `worldline-chronos-v0.2` bundle containing world identity, spatial reference, selected time, branch ancestry, events, metrics, seeds, evidence/fidelity labels, and replay commitments. Provider IDs are excluded.
 
-4DWorldBench and Omni-WorldBench are treated as future evaluation adapters, not rendering or simulation engines.
+This is an interchange contract for later Unreal/Cesium tooling, not a shipping Unreal build.
 
 ## Deployment
 
-The repository is a React 19 / TypeScript / Vite application. CI runs dependency installation, type-check, tests, and build. Production deployment uses the existing GitHub Pages workflow from `main`, with `VITE_BASE=/WorldGen/`. The credential-free procedural provider is the required production fallback.
+The application remains React 19 / TypeScript / Vite with the existing Three.js/R3F procedural runtime. CI installs dependencies, type-checks, runs the full Vitest suite, and builds production output. GitHub Pages deploys from `main` using `VITE_BASE=/WorldGen/`.
+
+No paid credential is required for the mandatory build/deploy path. Network Earth enhancements may fail independently without making the app unusable.
 
 ## Evidence boundary
 
-The current release is a deterministic visualization/simulation prototype. It does not claim calibrated future probabilities, scientific forecasting accuracy, realistic interacting populations, formal manifold geometry, validated extraterrestrial habitability, or unrestricted autonomous research authority. Visual fidelity must not outrun epistemic fidelity.
+Worldline v0.2 is an evidence-aware visualization/simulation research application. It does not claim calibrated future probabilities, a fully validated municipal digital twin, realistic interacting populations, formal manifold geometry, benchmark success without executed benchmark evidence, observed exoplanet surfaces without supporting data, or unrestricted autonomous research authority. Visual fidelity must not outrun epistemic fidelity.
