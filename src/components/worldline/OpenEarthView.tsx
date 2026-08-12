@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { TimeMode } from '../../worldline/types';
 
 type MapLibreMap = {
   on: (event: string, callback: (event?: unknown) => void) => void;
@@ -11,7 +12,6 @@ type MapLibreMap = {
 
 type MapLibreNamespace = {
   Map: new (options: Record<string, unknown>) => MapLibreMap;
-  NavigationControl: new () => unknown;
 };
 
 declare global {
@@ -35,8 +35,11 @@ function ensureMapLibre(): Promise<MapLibreNamespace> {
     const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     const finish = () => window.maplibregl ? resolve(window.maplibregl) : reject(new Error('MapLibre global missing after load'));
     if (existing) {
-      existing.addEventListener('load', finish, { once: true });
-      existing.addEventListener('error', () => reject(new Error('MapLibre failed to load')), { once: true });
+      if (window.maplibregl) finish();
+      else {
+        existing.addEventListener('load', finish, { once: true });
+        existing.addEventListener('error', () => reject(new Error('MapLibre failed to load')), { once: true });
+      }
       return;
     }
     const script = document.createElement('script');
@@ -52,11 +55,15 @@ function ensureMapLibre(): Promise<MapLibreNamespace> {
 export function OpenEarthView({
   center = [-70.9342, 41.6362],
   zoom = 12.4,
+  selectedYear = 2026,
+  timeMode = 'SLICE',
   onReady,
   onFailure,
 }: {
   center?: [number, number];
   zoom?: number;
+  selectedYear?: number;
+  timeMode?: TimeMode;
   onReady?: () => void;
   onFailure?: (reason: string) => void;
 }) {
@@ -64,6 +71,7 @@ export function OpenEarthView({
 
   useEffect(() => {
     let disposed = false;
+    let loaded = false;
     let map: MapLibreMap | null = null;
     ensureMapLibre().then((maplibre) => {
       if (disposed || !containerRef.current) return;
@@ -79,6 +87,7 @@ export function OpenEarthView({
       });
       map.on('load', () => {
         if (!map || disposed) return;
+        loaded = true;
         try {
           if (map.getSource('openmaptiles') && !map.getLayer('worldline-buildings')) {
             map.addLayer({
@@ -109,7 +118,7 @@ export function OpenEarthView({
         onReady?.();
       });
       map.on('error', () => {
-        if (!disposed) onFailure?.('Open Earth provider reported a rendering or network error.');
+        if (!disposed && !loaded) onFailure?.('Open Earth provider could not establish the initial map surface.');
       });
     }).catch((error: unknown) => {
       if (!disposed) onFailure?.(error instanceof Error ? error.message : 'Open Earth provider failed to load.');
@@ -120,9 +129,16 @@ export function OpenEarthView({
     };
   }, [center[0], center[1], zoom, onFailure, onReady]);
 
+  const temporalLayers = timeMode === 'PARALLAX'
+    ? [Math.max(2023, selectedYear - 3), selectedYear, Math.min(2046, selectedYear + 5)]
+    : [];
+
   return (
     <div className="wl-open-earth" aria-label="Open Earth geographic view">
       <div ref={containerRef} className="wl-open-earth-map" />
+      {temporalLayers.length > 0 && <div className="wl-earth-parallax" aria-label="New Bedford Temporal Parallax layers">
+        {temporalLayers.map((year, index) => <div key={`${year}-${index}`} className={`wl-earth-time-plane plane-${index}`}><span>{year}</span><small>{year <= 2023 ? 'OBSERVATION' : year <= 2025 ? 'NEAREST OBSERVATION' : year === 2026 ? 'RECONSTRUCTION' : 'SIMULATION'}</small></div>)}
+      </div>}
       <div className="wl-open-earth-caption">Open Earth · OpenFreeMap / OpenStreetMap · reconstructed geography</div>
     </div>
   );
