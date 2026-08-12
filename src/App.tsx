@@ -11,12 +11,14 @@ import { ExportPanel } from './components/ExportPanel';
 import { Minimap } from './components/Minimap';
 import { HistoryPanel } from './components/HistoryPanel';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
+import { OpenEarthView } from './components/worldline/OpenEarthView';
 import { WorldlineShell } from './components/worldline/WorldlineShell';
 import { useWorldGenerator } from './hooks/useWorldGenerator';
 import { useDayNightCycle } from './hooks/useDayNightCycle';
 import { useProStatus } from './hooks/useProStatus';
 import { computeWorldStats } from './lib/stats';
 import { deriveWeather } from './lib/weather';
+import { createProviderRegistry, requestedProviderForWorld, resolveSurfaceProvider } from './worldline/providers';
 import { createInitialWorldlineState } from './worldline/state';
 import type { WorldlineState } from './worldline/types';
 import './styles/index.css';
@@ -40,8 +42,18 @@ export default function App() {
   const { timeOfDay } = useDayNightCycle();
   const isPro = useProStatus();
   const [worldline, setWorldline] = useState<WorldlineState>(() => createInitialWorldlineState());
+  const [openEarthFailed, setOpenEarthFailed] = useState(false);
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
   const weather = useMemo(() => (stats ? deriveWeather(stats) : 'clear' as const), [stats]);
+
+  const requestedProvider = requestedProviderForWorld(worldline.activeWorld.id);
+  const providerRegistry = useMemo(() => createProviderRegistry({
+    networkAvailable: !openEarthFailed,
+    localNewBedfordAvailable: true,
+    requested: requestedProvider,
+  }), [openEarthFailed, requestedProvider]);
+  const providerStatus = resolveSurfaceProvider(providerRegistry, requestedProvider);
+  const fallbackActive = requestedProvider !== providerStatus.id;
 
   const temporalSnapshots = worldline.timeMode === 'PARALLAX'
     ? [
@@ -51,7 +63,7 @@ export default function App() {
       ]
     : [];
 
-  const scene = (
+  const proceduralScene = (
     <ErrorBoundary fallbackTitle="3D rendering failed">
       <WorldScene3D
         world={world}
@@ -67,7 +79,11 @@ export default function App() {
     </ErrorBoundary>
   );
 
-  const worldTools = (
+  const scene = worldline.activeWorld.id === 'new-bedford-001' && providerStatus.id === 'open-earth-maplibre'
+    ? <ErrorBoundary fallbackTitle="Open Earth rendering failed"><OpenEarthView onFailure={() => setOpenEarthFailed(true)} /></ErrorBoundary>
+    : proceduralScene;
+
+  const generatedWorldTools = (
     <div className="wl-legacy-tools">
       <PresetGallery disabled={generating} onSelect={(preset) => updateConfig(preset)} />
       <ControlPanel
@@ -90,9 +106,20 @@ export default function App() {
     </div>
   );
 
+  const worldTools = worldline.activeWorld.id === 'new-bedford-001'
+    ? <div className="wl-real-world-tools"><p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. The procedural renderer remains the automatic fallback.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailed(false)}>Retry Open Earth provider</button></div>
+    : generatedWorldTools;
+
   return (
     <>
-      <WorldlineShell state={worldline} onStateChange={setWorldline} scene={scene} worldTools={worldTools} />
+      <WorldlineShell
+        state={worldline}
+        onStateChange={setWorldline}
+        scene={scene}
+        worldTools={worldTools}
+        providerStatus={providerStatus}
+        fallbackActive={fallbackActive}
+      />
       <PWAUpdatePrompt />
     </>
   );
