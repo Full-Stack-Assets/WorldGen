@@ -3,6 +3,7 @@ import { createBranch, selectBranch, selectWorld, selectYear } from '../../world
 import type { EarthRuntimeStatus } from '../../worldline/earthRuntime';
 import type { ProviderStatus } from '../../worldline/providers';
 import type { TimeMode, WorldlineState } from '../../worldline/types';
+import { ChronosArena } from './ChronosArena';
 import { ComparePanel } from './ComparePanel';
 import { DataPanel } from './DataPanel';
 import { FutureNavigator } from './FutureNavigator';
@@ -15,6 +16,7 @@ import { WorldlineHUD } from './WorldlineHUD';
 import './worldline.css';
 import './worldline-v02.css';
 import './worldline-v05.css';
+import './worldline-v07.css';
 
 export const NAV_ITEMS = ['WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY'] as const;
 export type WorldlineSurface = typeof NAV_ITEMS[number];
@@ -37,6 +39,7 @@ export function WorldlineShell({
   const [surface, setSurface] = useState<WorldlineSurface>('WORLD');
   const [mechanicsOpen, setMechanicsOpen] = useState(false);
   const [truthLens, setTruthLens] = useState(false);
+  const [chronosOpen, setChronosOpen] = useState(false);
 
   const setTimeMode = (mode: TimeMode) => onStateChange({ ...state, timeMode: mode });
   const branchCount = Object.keys(state.branches).length;
@@ -52,6 +55,7 @@ export function WorldlineShell({
         <nav className="wl-nav glass-panel" aria-label="Worldline primary navigation">
           {NAV_ITEMS.map((item) => <button type="button" key={item} className={surface === item ? 'active' : ''} onClick={() => setSurface(item)}>{item}</button>)}
           <TruthLens active={truthLens} onToggle={() => setTruthLens((value) => !value)} />
+          <button type="button" className={chronosOpen ? 'active wl-chronos-toggle' : 'wl-chronos-toggle'} onClick={() => setChronosOpen((value) => !value)}>CHRONOS</button>
           <button type="button" className={mechanicsOpen ? 'active mechanics' : 'mechanics'} onClick={() => setMechanicsOpen((value) => !value)}>MECHANICS</button>
         </nav>
 
@@ -65,6 +69,7 @@ export function WorldlineShell({
         </div>
 
         {mechanicsOpen && <aside className="wl-mechanics-drawer"><MechanicsPanel state={state} /></aside>}
+        {chronosOpen && <ChronosArena onClose={() => setChronosOpen(false)} />}
 
         <div className="wl-time-ribbon glass-panel">
           <span>PAST</span><i /><strong>{state.selectedYear}</strong><i /><span>FUTURE</span>
