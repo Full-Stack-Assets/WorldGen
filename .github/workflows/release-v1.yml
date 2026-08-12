@@ -1,0 +1,49 @@
+name: Create Worldline v1.0.0 Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Tag and publish v1.0.0
+    if: contains(github.event.head_commit.message, '[release-v1.0.0]')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout exact release commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify release target and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            TAG_SHA=$(git rev-list -n 1 v1.0.0)
+            if [ "$TAG_SHA" != "$GITHUB_SHA" ]; then
+              echo "v1.0.0 already exists at $TAG_SHA, expected $GITHUB_SHA" >&2
+              exit 1
+            fi
+            echo "v1.0.0 already exists at the exact release commit."
+          else
+            gh release create v1.0.0 \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Worldline 1.0 · Worldline One" \
+              --notes-file docs/WORLDLINE_V1.0.md
+          fi
+
+      - name: Verify tag target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          TAG_SHA=$(git rev-list -n 1 v1.0.0)
+          test "$TAG_SHA" = "$GITHUB_SHA"
+          gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" --json tagName,targetCommitish,name,isDraft,isPrerelease
