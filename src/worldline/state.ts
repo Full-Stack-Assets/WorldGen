@@ -21,30 +21,52 @@ export function commitSnapshot(state: WorldlineState, snapshot: WorldSnapshot): 
     ...branch,
     snapshots: [...branch.snapshots.filter((item) => item.year !== snapshot.year), structuredClone(snapshot)].sort((a, b) => a.year - b.year),
   };
+  return { ...state, branches: { ...state.branches, [branch.id]: nextBranch } };
+}
+
+function divergedSnapshot(source: WorldSnapshot, branchId: string, forkYear: number, direction: number): WorldSnapshot {
+  const steps = Math.max(0, Math.round((source.year - forkYear) / 5));
+  const metrics = Object.fromEntries(Object.entries(source.metrics).map(([key, value]) => {
+    if (key === 'population') return [key, Math.round(value + direction * steps * 850)];
+    if (key === 'affordability') return [key, Math.max(0, Math.min(100, value + direction * steps * 1.5))];
+    if (key === 'vitality') return [key, Math.max(0, Math.min(100, value + direction * steps * 2.2))];
+    if (key === 'resilience') return [key, Math.max(0, Math.min(100, value + direction * steps * 1.8))];
+    return [key, value];
+  }));
+  const metricText = Object.entries(metrics).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => `${key}:${value}`).join('|');
   return {
-    ...state,
-    branches: { ...state.branches, [branch.id]: nextBranch },
+    ...structuredClone(source),
+    id: `${branchId}-${source.year}`,
+    branchId,
+    metrics,
+    commitment: `${branchId}:${source.year}:${metricText}`,
   };
 }
 
-export function createBranch(
-  state: WorldlineState,
-  input: { label: string; atYear: number },
-): WorldlineState {
+export function createBranch(state: WorldlineState, input: { label: string; atYear: number }): WorldlineState {
   const parent = state.branches[state.activeBranchId];
   if (!parent) throw new Error('Active branch is missing');
   const eligibleSnapshots = parent.snapshots.filter((snapshot) => snapshot.year <= input.atYear);
   if (eligibleSnapshots.length === 0) throw new Error('Cannot branch before the first committed snapshot');
-  const forkSnapshot = eligibleSnapshots[eligibleSnapshots.length - 1];
-  const id = `branch-${Object.keys(state.branches).length}-${input.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const branchIndex = Object.keys(state.branches).length;
+  const id = `branch-${branchIndex}-${input.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const direction = branchIndex % 2 === 0 ? -1 : 1;
+  const sourceSnapshots = parent.snapshots.filter((snapshot) => snapshot.year >= eligibleSnapshots[eligibleSnapshots.length - 1].year);
+  const childSnapshots = sourceSnapshots.map((snapshot) => divergedSnapshot(snapshot, id, input.atYear, direction));
   const child: BranchRecord = {
     id,
     label: input.label,
     parentId: parent.id,
     forkYear: input.atYear,
-    seed: parent.seed + Object.keys(state.branches).length * 7919,
-    events: [],
-    snapshots: [{ ...structuredClone(forkSnapshot), id: `${id}-${forkSnapshot.year}`, branchId: id }],
+    seed: parent.seed + branchIndex * 7919,
+    events: [{
+      id: `${id}-event`,
+      year: input.atYear,
+      type: 'scenario-intervention',
+      label: direction > 0 ? 'Adaptive intervention' : 'Constraint shock',
+      delta: { direction },
+    }],
+    snapshots: childSnapshots,
   };
   return {
     ...state,
