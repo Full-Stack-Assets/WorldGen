@@ -25,6 +25,16 @@ The Node service on Render is the canonical application runtime. GitHub Pages re
 - Shared world-model evaluation receipt schema based on the four top-level 4DWorldBench dimensions: Perceptual Quality, Condition-4D Alignment, Physical Realism, and 4D Consistency.
 - Chronos and Cosmos surfaces remain explicit about fictional, generated, reconstructed, observed, and simulated state.
 
+## Persistence security boundary
+
+The browser does not receive database write authority. Studio persistence follows this path:
+
+`browser → same-origin /api/* → Render Node backend → token-authenticated Supabase RPC gateway → Worldline tables`
+
+The public Supabase credential is used only to invoke the gateway through PostgREST. The raw backend authorization token exists only in the Render service environment; the database stores only a cryptographic digest for comparison. Direct anonymous table access is not part of the intended production contract.
+
+CI verifies that `server.mjs` uses the RPC gateway and rejects reintroduction of direct REST access to the Worldline persistence tables. The gateway exposes only the operations required by Studio project persistence: health, project listing, deterministic project synchronization, and project deletion.
+
 ## Research-source synthesis
 
 The v2 research architecture was informed by saved Omphalis sources for Worldline, 4DWorldBench, Genie 3, NVIDIA Cosmos 3, SelfLLM, SkillZip, and Temporal Drift. See `docs/WORLDLINE_OMPHALIS_SYNTHESIS.md` for the source-grounded mapping and limitations.
