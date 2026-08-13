@@ -5,7 +5,7 @@ import { FlagshipControlsLayer } from './FlagshipControlsLayer';
 import { ForgeControls } from './ForgeControls';
 import type { MapLibreMap } from './maplibreRuntime';
 import { useFlagshipFlight as useCinematicJourney } from './useFlagshipFlight';
-import { useForgeController } from './useForgeController';
+import { useForgeController } from './useForgeControllerV5';
 import { useMountedEarthMap } from './useMountedEarthMap';
 import './flagship-sequence.css';
 
