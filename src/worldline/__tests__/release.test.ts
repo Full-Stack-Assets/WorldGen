@@ -2,9 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { getBuildCommit, WORLDLINE_RELEASE } from '../release';
 
 describe('Worldline release manifest', () => {
-  it('identifies the exact public release', () => {
-    expect(WORLDLINE_RELEASE.version).toBe('1.0.0');
-    expect(WORLDLINE_RELEASE.codename).toBe('Worldline One');
+  it('identifies the exact Worldline Studio public release', () => {
+    expect(WORLDLINE_RELEASE.version).toBe('2.0.0');
+    expect(WORLDLINE_RELEASE.codename).toBe('Worldline Studio');
+  });
+
+  it('declares the v2 project, experiment, and Worldpack schemas', () => {
+    expect(WORLDLINE_RELEASE.projectSchema).toBe('worldline-project-v2');
+    expect(WORLDLINE_RELEASE.experimentSchema).toBe('worldline-experiment-v2');
+    expect(WORLDLINE_RELEASE.worldpackSchema).toBe('worldline-worldpack-v2');
   });
 
   it('keeps the mandatory provider set free-first', () => {
