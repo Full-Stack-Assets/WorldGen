@@ -1,3 +1,5 @@
+import { isAutoPromoteEligible, promotionBoundaryReason } from './promotionPolicy';
+
 export type RecursiveStage =
   | 'OBSERVE' | 'DETECT' | 'EXPLAIN' | 'CHALLENGE' | 'EXPERIMENT' | 'BUILD'
   | 'EXECUTE' | 'COMPARE' | 'VERIFY' | 'PROMOTE_REJECT' | 'MONITOR' | 'REALITY_WAKE' | 'REOPEN';
@@ -135,12 +137,16 @@ export function decidePromotion(candidate: RecursiveCandidate, verification: Ver
   if (!verification.passed) {
     return { candidateId: candidate.id, status: 'NO_PROMOTION', reason: verification.reason };
   }
-  const constitutionalKinds: CandidateKind[] = ['ARCHITECTURAL', 'SCIENTIFIC_CLAIM', 'AUTHORITY_POLICY'];
-  if (constitutionalKinds.includes(candidate.kind) || !candidate.reversible || !candidate.machineVerifiable) {
+  if (!isAutoPromoteEligible({
+    kind: candidate.kind,
+    reversible: candidate.reversible,
+    machineVerifiable: candidate.machineVerifiable,
+    independentVerificationPassed: verification.passed,
+  })) {
     return {
       candidateId: candidate.id,
       status: 'REQUIRES_APPROVAL',
-      reason: 'Candidate crosses the constitutional promotion boundary.',
+      reason: promotionBoundaryReason(candidate.kind),
     };
   }
   return {

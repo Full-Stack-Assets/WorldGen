@@ -31,6 +31,7 @@ export function FlagshipControlsLayer({
       playing={journey.playing}
       exporting={journey.exporting}
       status={journey.status}
+      compact={forgeOpen}
       onPlay={() => void journey.play(0)}
       onPause={journey.pause}
       onExit={journey.exit}

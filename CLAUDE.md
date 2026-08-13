@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-WorldGen is a client-only React + TypeScript + Vite app that generates procedural 3D fantasy worlds from a seed and renders them with Three.js (via React Three Fiber). There is no backend; optional AI lore comes straight from the browser via the Gemini API.
+**Worldline Studio** is the product; **WorldGen** is the canonical rendering/runtime repository that hosts it. The app is primarily a client React + TypeScript + Vite experience that navigates evidence-aware worlds through time, branching futures, and Studio projects. Procedural fantasy worlds are generated from a seed and rendered with Three.js (React Three Fiber). Optional AI lore uses the Gemini API from the browser. An optional Node service (`server.mjs`) fronts Studio persistence via a Supabase RPC gateway for production (nowfable.com).
+
+Human-facing grammar: **3D space + navigable time**. Epistemic classes (`OBSERVED`, `RECONSTRUCTED`, `SIMULATED`, `GENERATED`, `SPECULATIVE`) stay explicit — generated/simulated state must never masquerade as observed reality.
 
 ## Commands
 
@@ -13,6 +15,7 @@ npm install
 npm run dev            # Vite dev server on http://localhost:5173
 npm run build          # tsc (type-check, noEmit) then vite build → dist/
 npm run preview        # serve the production build on port 4173
+npm start              # Node dist server + Studio /api gateway (after build)
 npm run typecheck      # tsc --noEmit only
 npm test               # Vitest (run mode) over src/**/*.test.ts
 npm run test:watch     # Vitest watch mode
@@ -20,34 +23,37 @@ npm run test:coverage  # Vitest with v8 coverage
 npm test -- worldgen   # run a single suite by filename substring
 ```
 
-Tests use **Vitest** (jsdom env) and live next to the code they cover as `src/**/*.test.ts`; they target the pure `src/lib` core and are excluded from the production `tsc` build (`tsconfig.json` `exclude`). No linter is configured. Verification gates: `npm run typecheck`, `npm test`, and `npm run build` (strict `tsc` with `noUnusedLocals`/`noUnusedParameters`, so unused code fails).
+Tests use **Vitest** (jsdom env) and live next to the code they cover as `src/**/*.test.ts`; they target the pure `src/lib` / `src/worldline` core and are excluded from the production `tsc` build (`tsconfig.json` `exclude`). No linter is configured. Verification gates: `npm run typecheck`, `npm test`, and `npm run build` (strict `tsc` with `noUnusedLocals`/`noUnusedParameters`, so unused code fails).
 
 ## Deployment
 
-CI (`.github/workflows/ci.yml`) runs type-check + tests + build on every PR and push to `main`. Pushes to `main` deploy to GitHub Pages via `.github/workflows/deploy.yml` (which also runs `npm test` before building). The site is served from a subpath, so the deploy builds with `VITE_BASE=/WorldGen/`; `vite.config.ts` reads that env var (default `/`). Any code that constructs URLs must respect `import.meta.env.BASE_URL` (see `src/lib/share.ts`).
+CI (`.github/workflows/ci.yml`) runs type-check + tests + build on every PR and push to `main`. Canonical production is the Node service at nowfable.com; GitHub Pages remains a static fallback. Pages builds use `VITE_BASE=/WorldGen/`; `vite.config.ts` reads that env var (default `/`). Any code that constructs URLs must respect `import.meta.env.BASE_URL` (see `src/lib/share.ts`).
 
 ## Architecture
 
-Data flows one way: **config → pure generation → WorldData → rendering/UI**.
+Data flows one way for procedural worlds: **config → pure generation → WorldData → rendering/UI**. Worldline state (`src/worldline/`) owns identity, branches, time, and epistemic class; renderers (WorldGen R3F, Open Earth MapLibre, FORGE) are projections and must not mutate canonical identity/branches.
 
-1. **State hub — `src/hooks/useWorldGenerator.ts`**: the single owner of app state (config, world, selected region, lore). Every config change calls `generateWorldAsync` and applies the result guarded by a monotonic request token (only the latest regenerate wins). Discrete changes (seed, preset, detail) regenerate immediately via `updateConfig`; continuous slider drags use `updateConfigLive`, which updates config state instantly but debounces the expensive generation (`src/lib/debounce.ts`). Each applied world is pushed to `src/lib/history.ts`. On mount it derives the initial seed/config from URL params and picks grid size by viewport (128 mobile / 192 desktop, overriding `DEFAULT_CONFIG`'s 256).
+1. **State hub — `src/hooks/useWorldGenerator.ts`**: owner of procedural config/world/selected region/lore. Config changes call `generateWorldAsync` guarded by a monotonic request token. Discrete changes regenerate via `updateConfig`; slider drags use `updateConfigLive` + debounce. Applied worlds push to `src/lib/history.ts`. Initial seed/config come from share URL params (full terrain/climate round-trip) with viewport grid size (128 mobile / 192 desktop).
 
-2. **Generation core — `src/lib/worldgen.ts` + `src/lib/noise.ts`**: `generateWorld(config)` is pure and fully deterministic per seed. Pipeline: fBm Perlin noise for elevation/moisture/temperature (moisture and temperature use seed offsets +1000/+2000) → latitude-adjusted temperature → `determineBiome` thresholds → `carveRivers` (downhill walk from high sources) → `carveLakes` → `placeSettlements` (suitability scoring, min-distance spacing). Output is `WorldData` with a row-major `cells[y][x]` grid. Keep this module free of React/Three imports. Generation runs off the main thread via `src/lib/worldgen.worker.ts`, fronted by `src/lib/worldGenService.ts` (`generateWorldAsync`), which transparently falls back to synchronous generation if Web Workers are unavailable or error — determinism is identical either way.
+2. **Generation core — `src/lib/worldgen.ts` + `src/lib/noise.ts`**: pure deterministic `generateWorld(config)`. Pipeline: fBm Perlin elevation/moisture/temperature (offsets +1000/+2000) → latitude temperature → biomes → rivers → lakes (+5000) → settlements (+9000). Worker via `worldGenService` / `worldgen.worker.ts` with sync fallback.
 
-3. **Types — `src/types/world.ts`**: all shared domain types (`WorldConfig`, `WorldData`, `WorldCell`, `Biome`, `Settlement`, `WorldLore`, …). The 15 `Biome` values are keyed throughout `src/lib/colors.ts` (colors + labels) and `src/lib/biomeCodex.ts`; adding a biome means updating all of those plus `determineBiome`.
+3. **Types — `src/types/world.ts`**: WorldGen domain types. Worldline domain types live in `src/worldline/types.ts`.
 
-4. **3D rendering — `src/components/three/`**: `WorldScene3D` sets up the Canvas, sky/clouds/stars, lighting, orbit camera, and postprocessing (bloom, vignette, chromatic aberration). `src/lib/terrainMesh.ts` converts the cell grid into a single vertex-colored `PlaneGeometry` (elevation displaced by `HEIGHT_SCALE`, underwater vertices darkened) and provides `worldPointToGrid` for click-picking — the inverse mapping used when a raycast hit selects a region. **Keep the scene self-contained — no runtime fetches of external assets.** drei's `<Cloud>` was replaced by `ProceduralClouds` (a runtime-generated canvas texture) precisely because `<Cloud>` fetches a texture from a CDN and throws (crashing the whole Canvas) when offline or the host is blocked.
+4. **3D rendering — `src/components/three/`**: R3F Canvas for Generated Worlds. Keep the scene self-contained — no CDN texture fetches. Open Earth uses MapLibre in `src/components/worldline/OpenEarthView.tsx` with procedural fallback.
 
-5. **AI lore — `src/lib/gemini.ts` + `src/lib/apiKey.ts`**: calls `gemini-2.0-flash`, prompting for JSON. The API key comes from localStorage (set via the in-app AI Lore panel) or `VITE_GEMINI_API_KEY`. Every AI function catches all errors and returns deterministic fallback content — lore generation must never throw or leave the UI stuck loading.
+5. **Worldline Studio — `src/components/worldline/` + `src/worldline/`**: Shell surfaces WORLD / TIME / FUTURES / COMPARE / DATA / LIBRARY, plus Truth Lens, Mechanics, Chronos, Studio projects, FORGE waterfront mutation on New Bedford, Discovery Engine / World Model Lab.
 
-6. **HUD/UI — `src/components/*.tsx` + `src/styles/index.css`**: 2D panels overlaid on the fullscreen canvas (`App.tsx` composes them). Styling is a single plain-CSS file with glass-morphism panel classes; no CSS framework. The 3D scene is wrapped in `ErrorBoundary` (`src/components/ErrorBoundary.tsx`) so a WebGL/render throw shows a recoverable panel instead of a blank screen while the HUD stays usable; a second boundary wraps the whole app in `main.tsx`.
+6. **AI lore — `src/lib/gemini.ts` + `src/lib/apiKey.ts`**: optional; always falls back deterministically. Never required for Earth / Studio / Chronos paths.
 
-7. **Monetization — `src/lib/monetization.ts`, `src/lib/pro.ts`, `src/lib/affiliates.ts`**: every channel (donations, AdSense, Pro tier, affiliates) is gated behind `VITE_*` env vars read at build time. With nothing configured, no monetization UI renders and no third-party scripts load — keep it that way when adding channels. **Pro** (`pro.ts` + `useProStatus`) is a license-gated tier verified client-side against Gumroad's license API, persisted in localStorage, broadcast via a `worldgen-pro-change` event / `useSyncExternalStore`. Pro gates are strictly additive (ad-free, High/Ultra grid sizes, heightmap/biome-map PNG exports) — never degrade the free tier to upsell.
+7. **HUD/UI — `App.tsx`**: composes `WorldlineShell` + scene + legacy WorldGen tools under WORLD + First Contact. Glass-morphism CSS in `src/styles/index.css` and `worldline*.css`. ErrorBoundaries wrap WebGL and the app root.
 
-8. **PWA — `vite-plugin-pwa` in `vite.config.ts`**: precaches the app shell (`clientsClaim` on, `skipWaiting` off) for full offline use; `registerType: 'prompt'` surfaces updates via `PWAUpdatePrompt` (`virtual:pwa-register/react`) instead of reloading unasked. Icons in `public/icon-*.png` are rendered from `public/favicon.svg`. Offline only holds because the scene is self-contained (see §4). The `localStorage`-backed stores (`src/lib/history.ts`, `pro.ts`) follow the same pattern: a module-level cache + change event exposed to React through `useSyncExternalStore` — return a **stable snapshot reference** or the hook loops.
+8. **Monetization — `src/lib/monetization.ts`, `src/lib/pro.ts`, `src/lib/affiliates.ts`**: all `VITE_*`-gated; unset env → no UI / no third-party scripts. Pro gates are additive only.
+
+9. **PWA — `vite-plugin-pwa`**: Worldline-branded manifest; precache shell; update prompt via `PWAUpdatePrompt`.
 
 ## Conventions
 
-- **Seeds are the contract.** Worlds must be reproducible: same seed + config → identical world. Seeds display as base36 strings (`seedToString`/`parseSeed` round-trip); share URLs encode `seed`, `scale`, `sea`, `oct` (`src/lib/share.ts`). Don't use `Math.random()` inside generation — use `createRng(seed + offset)` from `src/lib/noise.ts`.
-- Derived seed offsets are load-bearing (+1000 moisture, +2000 temperature, +5000 lakes, +9000 settlements); changing them changes every existing shared world.
+- **Seeds are the contract.** Same seed + config → identical world. Share URLs encode the full config set in `src/lib/share.ts`. Don't use `Math.random()` inside generation — use `createRng(seed + offset)` from `src/lib/noise.ts`.
+- Derived seed offsets are load-bearing (+1000 moisture, +2000 temperature, +5000 lakes, +9000 settlements).
 - Grid coordinates are `cells[y][x]` (row-major) everywhere.
+- Evidence boundary: visual/model capability claims may never outrun executed evidence on the active Worldline state.

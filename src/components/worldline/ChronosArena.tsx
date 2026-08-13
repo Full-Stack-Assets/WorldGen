@@ -11,6 +11,12 @@ import {
   type ChronosGameplayState,
   type ChronosPoint,
 } from '../../worldline/chronosGameplay';
+import {
+  applyChronosDivergence,
+  chronosDivergenceChoices,
+  chronosDynamicRange,
+  isConverging,
+} from '../../worldline/chronosSpectacle';
 
 export const CHRONOS_EVIDENCE_COPY = 'Fictional gameplay mechanic inspired by worldline and spacetime concepts. Echoes are deterministic replays, not experimentally verified time manipulation.';
 
@@ -89,15 +95,19 @@ export function ChronosArena({ onClose }: { onClose?: () => void }) {
 
   const echoEnabled = Boolean(state.anchor && state.samples.length > state.anchor.sampleIndex + 1);
   const anchorPoint = state.anchor ? state.samples[state.anchor.sampleIndex] : null;
+  const converging = isConverging(state.samples.at(-1), echoPoint, 4.5);
+  const range = chronosDynamicRange(state, converging);
+  const choices = chronosDivergenceChoices(state);
 
   return (
-    <section className="wl-chronos-arena glass-panel" aria-label="Chronos playable worldline arena">
+    <section className={`wl-chronos-arena glass-panel wl-chronos-${range.toLowerCase()}`} aria-label="Chronos playable worldline arena" data-dynamic-range={range}>
       <header className="wl-chronos-header">
         <div><div className="wl-panel-kicker">CHRONOS PARADIGM</div><h2>Worldline Arena</h2></div>
         {onClose && <button type="button" className="wl-secondary" onClick={onClose}>Close</button>}
       </header>
       <p className="wl-chronos-boundary">{CHRONOS_EVIDENCE_COPY}</p>
-      <div className={`wl-chronos-stage ${echoPoint && detectChronosConvergence(state.samples.at(-1)!, echoPoint, 4.5) ? 'converging' : ''}`}>
+      <p className="wl-chronos-range" aria-live="polite">Dynamic range · {range} · fictional intensity, not physics</p>
+      <div className={`wl-chronos-stage ${converging ? 'converging' : ''}`}>
         <svg viewBox="0 0 100 100" role="img" aria-label="Recorded current worldline and deterministic temporal Echo">
           <defs>
             <filter id="chronos-glow"><feGaussianBlur stdDeviation="1.3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -120,7 +130,19 @@ export function ChronosArena({ onClose }: { onClose?: () => void }) {
         <button type="button" className="wl-primary" disabled={!echoEnabled} onClick={createEcho}>Create exact Echo</button>
         <button type="button" className="wl-secondary" onClick={reset}>Reset</button>
       </div>
-      <p className="wl-help">Move with WASD/arrow keys or the controls. Anchor a moment, move again, then replay the exact post-anchor segment as an Echo. The arena is local gameplay state and does not alter the active Worldline simulation branch.</p>
+      <div className="wl-chronos-divergence" aria-label="Readable future choices">
+        {choices.map((choice) => (
+          <button
+            key={choice.id}
+            type="button"
+            className="wl-secondary"
+            onClick={() => setState((current) => applyChronosDivergence(moveChronos, current, choice))}
+          >
+            {choice.label}
+          </button>
+        ))}
+      </div>
+      <p className="wl-help">Move with WASD/arrow keys or the controls. Anchor a moment, move again, then replay the exact post-anchor segment as an Echo. Divergence offers a few readable fictional choices. The arena is local gameplay state and does not alter the active Worldline simulation branch.</p>
     </section>
   );
 }

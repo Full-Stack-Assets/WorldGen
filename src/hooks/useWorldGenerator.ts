@@ -4,7 +4,7 @@ import { DEFAULT_CONFIG } from '../types/world';
 import { generateRegionLore, generateWorldLore } from '../lib/gemini';
 import { parseSeed, randomSeed } from '../lib/worldgen';
 import { generateWorldAsync } from '../lib/worldGenService';
-import { recordWorld } from '../lib/history';
+import { historyEntryToConfig, recordWorld, type HistoryEntry } from '../lib/history';
 import { debounce } from '../lib/debounce';
 import { parseShareParams } from '../lib/share';
 
@@ -71,6 +71,10 @@ export function useWorldGenerator() {
     regenerate({ seed: parseSeed(seedStr) });
   }, [regenerate]);
 
+  const loadHistoryEntry = useCallback((entry: HistoryEntry) => {
+    regenerate(historyEntryToConfig(entry));
+  }, [regenerate]);
+
   // Immediate regeneration for discrete changes (presets, detail, seed).
   const updateConfig = useCallback((updates: Partial<WorldConfig>) => {
     regenerate(updates);
@@ -114,6 +118,10 @@ export function useWorldGenerator() {
     setLoreLoading(false);
   }, [world]);
 
+  const applyWorldEdit = useCallback((next: WorldData) => {
+    setWorld(next);
+  }, []);
+
   useEffect(() => {
     regenerate();
     return () => debouncedGenerate.cancel();
@@ -129,10 +137,13 @@ export function useWorldGenerator() {
     regenerate,
     newSeed,
     setSeed,
+    loadHistoryEntry,
     updateConfig,
     updateConfigLive,
     selectRegion,
     generateLore,
     clearSelection: () => setSelectedRegion(null),
+    applyWorldEdit,
+    setWorldLore,
   };
 }

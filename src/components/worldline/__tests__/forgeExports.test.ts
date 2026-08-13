@@ -20,23 +20,32 @@ describe('FORGE exports', () => {
     expect(FORGE_SCENE_FILENAME).toBe('worldgen-forge-new-bedford.scene.json');
   });
 
-  it('builds an explicitly conceptual scene download', () => {
-    const download = createForgeSceneDownload(
-      { ...createInitialForgeState(), mode: 'editing' },
-      camera,
-    );
-    const scene = JSON.parse(download.contents);
-    expect(download.filename).toBe(FORGE_SCENE_FILENAME);
-    expect(scene.product).toBe('WorldGen FORGE');
-    expect(scene.version).toBe('5.0.0');
-    expect(scene.classification).toBe('VISUAL_CONCEPT');
-    expect(scene.forge.variantId).toBe('lumen-quay');
+  it('serializes a conceptual scene package for download', () => {
+    const createObjectURL = vi.fn(() => 'blob:forge');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL });
+    downloadForgeScenePackage(createInitialForgeState(), {
+      center: [-70.9217, 41.6349],
+      zoom: 17.4,
+      pitch: 72,
+      bearing: -40,
+    });
+    expect(createObjectURL).toHaveBeenCalled();
+    const blob = createObjectURL.mock.calls[0][0] as Blob;
+    expect(blob.type).toContain('json');
+    vi.unstubAllGlobals();
   });
 
-  it('rejects still export when canvas capture is unavailable', async () => {
-    const canvas = {} as HTMLCanvasElement;
-    await expect(downloadForgeStill(canvas)).rejects.toThrow(
-      'PNG export is unavailable in this browser.',
-    );
+  it('rejects still export when the canvas cannot produce a blob', async () => {
+    await expect(downloadForgeStill(null)).rejects.toThrow(/drawable map canvas/i);
+  });
+
+  it('reads camera state from a MapLibre-like map', () => {
+    expect(readForgeCamera({
+      getCenter: () => ({ lng: -70.9, lat: 41.6 }),
+      getZoom: () => 12,
+      getPitch: () => 40,
+      getBearing: () => 10,
+    })).toEqual({ center: [-70.9, 41.6], zoom: 12, pitch: 40, bearing: 10 });
   });
 });

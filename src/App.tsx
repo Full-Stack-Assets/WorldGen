@@ -10,6 +10,13 @@ import { SharePanel } from './components/SharePanel';
 import { ExportPanel } from './components/ExportPanel';
 import { Minimap } from './components/Minimap';
 import { HistoryPanel } from './components/HistoryPanel';
+import { TimeControl } from './components/TimeControl';
+import { BiomeCodex } from './components/BiomeCodex';
+import { ProPanel } from './components/ProPanel';
+import { SupportPanel } from './components/SupportPanel';
+import { AffiliatePanel } from './components/AffiliatePanel';
+import { AdBanner } from './components/AdBanner';
+import { GeneratedWorldEditor } from './components/GeneratedWorldEditor';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import { FirstContact } from './components/worldline/FirstContact';
 import { OpenEarthView } from './components/worldline/OpenEarthView';
@@ -19,6 +26,7 @@ import { useDayNightCycle } from './hooks/useDayNightCycle';
 import { useProStatus } from './hooks/useProStatus';
 import { computeWorldStats } from './lib/stats';
 import { deriveWeather } from './lib/weather';
+import { timeVolumeSamples } from './worldline/timeEngine';
 import { createEarthRuntimeStatus } from './worldline/earthRuntime';
 import { FIRST_CONTACT_STORAGE_KEY, shouldShowFirstContact } from './worldline/firstContact';
 import { createProviderRegistry, requestedProviderForWorld, resolveSurfaceProvider } from './worldline/providers';
@@ -48,17 +56,20 @@ export default function App() {
     loreLoading,
     newSeed,
     setSeed,
+    loadHistoryEntry,
     updateConfig,
     updateConfigLive,
     selectRegion,
     generateLore,
     clearSelection,
+    applyWorldEdit,
   } = useWorldGenerator();
-  const { timeOfDay } = useDayNightCycle();
+  const { timeOfDay, autoPlay, setManualTime, toggleAutoPlay } = useDayNightCycle();
   const isPro = useProStatus();
   const [worldline, setWorldline] = useState<WorldlineState>(() => createFlagshipWorldlineState());
   const [openEarthFailure, setOpenEarthFailure] = useState<string | null>(null);
   const [firstContactVisible, setFirstContactVisible] = useState(initialFirstContactVisibility);
+  const [codexOpen, setCodexOpen] = useState(false);
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
   const weather = useMemo(() => (stats ? deriveWeather(stats) : 'clear' as const), [stats]);
   const handleOpenEarthFailure = useCallback((reason: string) => setOpenEarthFailure(reason), []);
@@ -81,12 +92,14 @@ export default function App() {
   const providerStatus = resolveSurfaceProvider(providerRegistry, requestedProvider);
   const earthRuntime = createEarthRuntimeStatus(requestedProvider, providerStatus, activeEarthFailure);
 
-  const temporalSnapshots = worldline.timeMode === 'PARALLAX'
-    ? [
-        { year: Math.max(2026, worldline.selectedYear - 5), offset: -1 },
-        { year: worldline.selectedYear, offset: 0 },
-        { year: Math.min(2046, worldline.selectedYear + 5), offset: 1 },
-      ]
+  const temporalSnapshots = worldline.timeMode === 'PARALLAX' || worldline.timeMode === 'VOLUME'
+    ? (worldline.timeMode === 'VOLUME'
+      ? timeVolumeSamples(worldline.selectedYear, 3).map((sample) => ({ year: sample.year, offset: sample.offset / 3 }))
+      : [
+          { year: Math.max(2026, worldline.selectedYear - 5), offset: -1 },
+          { year: worldline.selectedYear, offset: 0 },
+          { year: Math.min(2046, worldline.selectedYear + 5), offset: 1 },
+        ])
     : [];
 
   const proceduralScene = (
@@ -114,6 +127,8 @@ export default function App() {
   const generatedWorldTools = (
     <div className="wl-legacy-tools">
       {replayControl}
+      <TimeControl timeOfDay={timeOfDay} autoPlay={autoPlay} onScrub={setManualTime} onToggleAutoPlay={toggleAutoPlay} />
+      <button className="wl-secondary" type="button" onClick={() => setCodexOpen(true)}>Biome Codex</button>
       <PresetGallery disabled={generating} onSelect={(preset) => updateConfig(preset)} />
       <ControlPanel
         config={config}
@@ -126,17 +141,30 @@ export default function App() {
         onGenerateLore={generateLore}
         loreLoading={loreLoading}
       />
-      <HistoryPanel activeSeed={config.seed} onLoad={setSeed} />
+      <HistoryPanel activeSeed={config.seed} onLoad={loadHistoryEntry} />
+      {world && (
+        <GeneratedWorldEditor
+          world={world}
+          selectedX={selectedRegion?.x}
+          selectedY={selectedRegion?.y}
+          onChange={applyWorldEdit}
+          onSelect={selectRegion}
+        />
+      )}
       {world && stats && <><Minimap world={world} selectedX={selectedRegion?.x} selectedY={selectedRegion?.y} onSelect={selectRegion} /><WorldDashboard stats={stats} world={world} /></>}
       <RegionPanel region={selectedRegion} onClose={clearSelection} />
       <WorldChronicle lore={worldLore} loading={loreLoading} onGenerate={generateLore} />
       <SharePanel config={config} />
       <ExportPanel world={world} />
+      <ProPanel />
+      <SupportPanel />
+      <AffiliatePanel />
+      <AdBanner />
     </div>
   );
 
   const worldTools = worldline.activeWorld.id === 'new-bedford-001'
-    ? <div className="wl-real-world-tools">{replayControl}<p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. Provider failures move to the procedural fallback without changing canonical branch state.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailure(null)}>Retry Open Earth provider</button></div>
+    ? <div className="wl-real-world-tools">{replayControl}<p>New Bedford World #001 uses the free Open Earth renderer when reachable and a versioned local provenance package for source metadata. Provider failures move to the procedural fallback without changing canonical branch state. FORGE mutations remain visual concepts.</p><button className="wl-secondary" type="button" onClick={() => setOpenEarthFailure(null)}>Retry Open Earth provider</button></div>
     : generatedWorldTools;
 
   return (
@@ -149,6 +177,7 @@ export default function App() {
         providerStatus={providerStatus}
         earthRuntime={earthRuntime}
       />
+      {codexOpen && <BiomeCodex onClose={() => setCodexOpen(false)} highlightBiome={selectedRegion?.biome} />}
       {firstContactVisible && <FirstContact onComplete={completeFirstContact} />}
       <PWAUpdatePrompt />
     </>

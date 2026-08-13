@@ -1,8 +1,9 @@
 import { createForgeGeometry } from './forgeGeometry';
 import { forgeVariant, type ForgeVariantId } from './forgeModel';
-import type { GeoJSONSourceLike, MapLibreMap } from './maplibreRuntime';
+import type { MapLibreMap } from './maplibreRuntime';
 
 export const FORGE_SOURCE_ID = 'worldgen-forge-scene';
+
 export const FORGE_LAYER_IDS = [
   'worldgen-forge-parcel-surface',
   'worldgen-forge-parcel-line',
@@ -86,14 +87,16 @@ export function addForgeLayers(map: MapLibreMap): void {
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-public-realm'],
       paint: {
-        'line-color': ['coalesce', ['get', 'accentColor'], '#9B7CFF'],
-        'line-width': 6,
-        'line-blur': 2.8,
-        'line-opacity': 0,
+        'line-color': '#F0C979',
+        'line-width': 3,
+        'line-opacity': 0.8,
       },
-    },
-    {
-      id: FORGE_LAYER_IDS[4],
+    });
+  }
+
+  if (!map.getLayer('worldgen-forge-vegetation')) {
+    map.addLayer({
+      id: 'worldgen-forge-vegetation',
       type: 'circle',
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-vegetation'],

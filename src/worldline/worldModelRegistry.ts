@@ -132,3 +132,10 @@ export function createWorldModelEvaluationReceipt(input: {
     scores,
   };
 }
+
+/** Adapter readiness is not a score. Only executed receipts with evidence may report numbers. */
+export function scoreFromReceipt(receipt: WorldModelEvaluationReceipt): number | null {
+  if (receipt.status !== 'EXECUTED' || !receipt.scores || receipt.evidence.length === 0) return null;
+  const values = WORLD_MODEL_EVALUATION_DIMENSIONS.map((dimension) => receipt.scores?.[dimension] ?? 0);
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(4));
+}

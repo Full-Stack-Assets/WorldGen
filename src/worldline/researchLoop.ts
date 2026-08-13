@@ -1,4 +1,5 @@
 import { createImprovementMemory, recordCandidateEvaluation, type ImprovementMemory } from './improvementMemory';
+import { isAutoPromoteEligible, promotionBoundaryReason } from './promotionPolicy';
 import { RECURSIVE_STAGES, type RecursiveStage } from './recursive';
 import { compressSkillPatches } from './skillCompression';
 
@@ -145,13 +146,15 @@ function verify(
 
 function decide(candidate: ResearchCandidate, receipt: ResearchVerifierReceipt): ResearchPromotion {
   if (!receipt.passed) return { candidateId: candidate.id, status: 'BLOCKED', reason: receipt.reason };
-  if (candidate.kind === 'ARCHITECTURAL' || candidate.kind === 'POLICY' || !candidate.reversible) {
-    return { candidateId: candidate.id, status: 'REQUIRES_APPROVAL', reason: 'Candidate crosses the constitutional promotion boundary.' };
-  }
-  if (candidate.kind === 'LOW_RISK_RENDERING' || candidate.kind === 'DATA_NORMALIZATION') {
+  if (isAutoPromoteEligible({
+    kind: candidate.kind,
+    reversible: candidate.reversible,
+    machineVerifiable: true,
+    independentVerificationPassed: receipt.passed,
+  })) {
     return { candidateId: candidate.id, status: 'AUTO_PROMOTED', reason: 'Reversible machine-verifiable candidate passed frozen independent verification.' };
   }
-  return { candidateId: candidate.id, status: 'REQUIRES_APPROVAL', reason: 'Model/simulation/benchmark changes require explicit promotion approval.' };
+  return { candidateId: candidate.id, status: 'REQUIRES_APPROVAL', reason: promotionBoundaryReason(candidate.kind) };
 }
 
 function createRealityWake(input: {

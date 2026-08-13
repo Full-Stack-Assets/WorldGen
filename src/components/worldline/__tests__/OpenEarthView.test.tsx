@@ -27,6 +27,8 @@ describe('OpenEarthView', () => {
     expect(html).toContain('Play flagship flight');
     expect(html).toContain('Export WebM');
     expect(html).toContain('Enter FORGE');
+    expect(html).not.toContain('causal graph');
+    expect((html.match(/wl-open-earth-map/g) ?? []).length).toBe(1);
     expect(html.match(/wl-open-earth-map/g)).toHaveLength(1);
     expect(html).not.toContain('WORLD DASHBOARD');
   });

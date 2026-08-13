@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WORLD_MODEL_REFERENCES, WORLD_MODEL_EVALUATION_DIMENSIONS, createWorldModelEvaluationReceipt } from '../worldModelRegistry';
+import { WORLD_MODEL_REFERENCES, WORLD_MODEL_EVALUATION_DIMENSIONS, createWorldModelEvaluationReceipt, scoreFromReceipt } from '../worldModelRegistry';
 
 describe('World model reference registry', () => {
   it('keeps Genie 3 and Cosmos 3 explicitly reference-only until a real adapter is connected', () => {
@@ -29,5 +29,29 @@ describe('World model reference registry', () => {
     });
     expect(receipt.status).toBe('NOT_EXECUTED');
     expect(receipt.scores).toBeNull();
+    expect(scoreFromReceipt(receipt)).toBeNull();
+  });
+
+  it('scores only executed receipts that carry evidence', () => {
+    const executed = createWorldModelEvaluationReceipt({
+      modelId: 'genie-3',
+      evaluatorId: '4dworldbench',
+      executed: true,
+      evidence: ['run-001'],
+      scores: {
+        PERCEPTUAL_QUALITY: 0.4,
+        CONDITION_4D_ALIGNMENT: 0.6,
+        PHYSICAL_REALISM: 0.5,
+        FOUR_D_CONSISTENCY: 0.5,
+      },
+    });
+    expect(scoreFromReceipt(executed)).toBe(0.5);
+    expect(scoreFromReceipt(createWorldModelEvaluationReceipt({
+      modelId: 'genie-3',
+      evaluatorId: '4dworldbench',
+      executed: true,
+      evidence: [],
+      scores: { PERCEPTUAL_QUALITY: 1 },
+    }))).toBeNull();
   });
 });

@@ -7,29 +7,7 @@ import {
 export const FORGE_STILL_FILENAME = 'worldgen-forge-new-bedford.png';
 export const FORGE_SCENE_FILENAME = 'worldgen-forge-new-bedford.scene.json';
 
-export interface ForgeSceneDownload {
-  filename: typeof FORGE_SCENE_FILENAME;
-  contents: string;
-}
-
-export function createForgeSceneDownload(
-  state: ForgeState,
-  camera: ForgeCameraState,
-): ForgeSceneDownload {
-  return {
-    filename: FORGE_SCENE_FILENAME,
-    contents: serializeForgeScenePackage(state, camera),
-  };
-}
-
-function triggerDownload(blob: Blob, filename: string): void {
-  if (
-    typeof document === 'undefined' ||
-    typeof URL === 'undefined' ||
-    typeof URL.createObjectURL !== 'function'
-  ) {
-    throw new Error('File download is unavailable in this browser.');
-  }
+function clickDownload(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

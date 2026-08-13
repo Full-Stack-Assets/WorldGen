@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { TimeMode } from '../../worldline/types';
 import { FlagshipAtmosphereOverlay } from './FlagshipAtmosphereOverlay';
 import { FlagshipControlsLayer } from './FlagshipControlsLayer';
@@ -8,6 +8,7 @@ import { useFlagshipFlight as useCinematicJourney } from './useFlagshipFlight';
 import { useForgeController } from './useForgeControllerV5';
 import { useMountedEarthMap } from './useMountedEarthMap';
 import './flagship-sequence.css';
+import './forge.css';
 
 export { chooseEarthProjection } from './maplibreRuntime';
 
@@ -49,6 +50,7 @@ export function OpenEarthView({
     [],
   );
 
+  const [mapReady, setMapReady] = useState(false);
   const journey = useCinematicJourney(
     mapRef,
     reducedMotion,
@@ -57,6 +59,11 @@ export function OpenEarthView({
   );
   const forge = useForgeController(mapRef, journey, reducedMotion, compact);
   const startAutoplay = useCallback(() => journey.play(0), [journey.play]);
+  const forge = useForgeController(mapRef, journey, reducedMotion);
+  const handleReady = useCallback(() => {
+    setMapReady(true);
+    onReady?.();
+  }, [onReady]);
 
   useMountedEarthMap({
     containerRef,
@@ -67,7 +74,7 @@ export function OpenEarthView({
     autoplay: autoplayFlagship,
     compact,
     reducedMotion,
-    onReady,
+    onReady: handleReady,
     onFailure,
     onAutoplay: startAutoplay,
     setStatus: journey.setStatus,

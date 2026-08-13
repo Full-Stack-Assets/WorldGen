@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { recordWorld, getHistory, clearHistory } from './history';
+import { recordWorld, getHistory, clearHistory, historyEntryToConfig } from './history';
 import { DEFAULT_CONFIG, type WorldConfig } from '../types/world';
 
-function cfg(seed: number): WorldConfig {
-  return { ...DEFAULT_CONFIG, seed };
+function cfg(seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {
+  return { ...DEFAULT_CONFIG, seed, ...extra };
 }
 
 beforeEach(() => {
@@ -46,5 +46,39 @@ describe('world history', () => {
   it('returns a stable snapshot reference between reads', () => {
     recordWorld(cfg(1), 1000);
     expect(getHistory()).toBe(getHistory());
+  });
+
+  it('stores and restores the full terrain and climate config', () => {
+    const world = cfg(77, {
+      scale: 91,
+      seaLevel: 0.33,
+      octaves: 4,
+      persistence: 0.61,
+      lacunarity: 2.4,
+      moistureScale: 41,
+      temperatureScale: 88,
+      width: 128,
+      height: 128,
+    });
+    recordWorld(world, 9000);
+    const restored = historyEntryToConfig(getHistory()[0]);
+    expect(restored).toMatchObject({
+      seed: 77,
+      scale: 91,
+      seaLevel: 0.33,
+      octaves: 4,
+      persistence: 0.61,
+      lacunarity: 2.4,
+      moistureScale: 41,
+      temperatureScale: 88,
+      width: 128,
+      height: 128,
+    });
+  });
+
+  it('stores climate fields with defaults from the current config', () => {
+    recordWorld(cfg(3), 2);
+    expect(getHistory()[0].persistence).toBe(DEFAULT_CONFIG.persistence);
+    expect(getHistory()[0].moistureScale).toBe(DEFAULT_CONFIG.moistureScale);
   });
 });

@@ -1,0 +1,59 @@
+.wl-explore-focus .wl-surface,
+.wl-explore-focus .wl-mechanics-drawer,
+.wl-explore-focus .wl-hud-meta,
+.wl-explore-focus .wl-studio-project-bar {
+  opacity: 0;
+  pointer-events: none;
+}
+.wl-explore-focus .wl-nav,
+.wl-explore-focus .wl-time-ribbon {
+  opacity: 0.88;
+}
+.wl-explore-focus .wl-scene {
+  z-index: 0;
+}
+.wl-chronos-range {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ad7ff;
+}
+.wl-chronos-divergence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.wl-truth-inspect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 0.68rem;
+}
+.history-hint {
+  font-size: 0.62rem;
+  color: #7d8fab;
+  margin-top: 8px;
+}
+.generated-world-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+  font-size: 0.72rem;
+}
+.wl-flagship-compact .wl-flagship-stage-markers {
+  display: none;
+}
+@media (max-width: 720px) {
+  .wl-panel {
+    width: min(100%, calc(100vw - 14px));
+    max-height: 38vh;
+  }
+  .wl-explore-focus .wl-panel {
+    max-height: 0;
+    overflow: hidden;
+  }
+}
