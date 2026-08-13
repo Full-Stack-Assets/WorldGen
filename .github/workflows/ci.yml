@@ -47,6 +47,42 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Verify backend server syntax
+        run: node --check server.mjs
+
+      - name: Verify backend persistence boundary
+        shell: python
+        run: |
+          from pathlib import Path
+          import sys
+
+          text = Path("server.mjs").read_text(encoding="utf-8")
+          required = [
+              "SUPABASE_BACKEND_TOKEN",
+              "worldline_backend_gateway",
+              "gatewayRequest('health')",
+              "gatewayRequest('list_projects')",
+              "gatewayRequest('sync_project'",
+              "gatewayRequest('delete_project'",
+          ]
+          forbidden = [
+              "worldline_projects?",
+              "worldline_interventions?",
+              "worldline_experiments?",
+          ]
+
+          missing = [item for item in required if item not in text]
+          direct = [item for item in forbidden if item in text]
+
+          if missing or direct:
+              if missing:
+                  print("Missing backend gateway contract markers:", missing)
+              if direct:
+                  print("Direct database table REST access reintroduced:", direct)
+              sys.exit(1)
+
+          print("Backend persistence boundary check passed.")
+
       - name: Install dependencies
         run: npm ci
 
