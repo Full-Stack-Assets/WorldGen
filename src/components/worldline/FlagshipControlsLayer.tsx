@@ -21,21 +21,21 @@ export function FlagshipControlsLayer({
   journey: CinematicJourneyState;
   forgeOpen?: boolean;
 }) {
+  if (forgeOpen) return null;
+
   return (
-    <div className={forgeOpen ? 'wl-flagship-layer forge-open' : 'wl-flagship-layer'}>
-      <FlagshipSequenceControls
-        stages={FLAGSHIP_STAGES}
-        activeStageIndex={journey.activeStageIndex}
-        completedStageIndex={journey.completedStageIndex}
-        playing={journey.playing}
-        exporting={journey.exporting}
-        status={journey.status}
-        onPlay={() => void journey.play(0)}
-        onPause={journey.pause}
-        onExit={journey.exit}
-        onExport={() => void journey.exportWebM()}
-        onSelectStage={(index) => void journey.selectStage(index)}
-      />
-    </div>
+    <FlagshipSequenceControls
+      stages={FLAGSHIP_STAGES}
+      activeStageIndex={journey.activeStageIndex}
+      completedStageIndex={journey.completedStageIndex}
+      playing={journey.playing}
+      exporting={journey.exporting}
+      status={journey.status}
+      onPlay={() => void journey.play(0)}
+      onPause={journey.pause}
+      onExit={journey.exit}
+      onExport={() => void journey.exportWebM()}
+      onSelectStage={(index) => void journey.selectStage(index)}
+    />
   );
 }
