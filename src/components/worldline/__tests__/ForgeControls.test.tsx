@@ -28,6 +28,25 @@ describe('ForgeControls', () => {
     expect(render()).toContain('Enter FORGE');
   });
 
+  it('disables Enter FORGE until the map is ready', () => {
+    const html = renderToStaticMarkup(createElement(ForgeControls, {
+      state: createInitialForgeState(),
+      mapReady: false,
+      onOpen: noop,
+      onClose: noop,
+      onSelectParcel: noop,
+      onPromptChange: noop,
+      onGenerate: noop,
+      onSelectVariant: noop,
+      onToggleGhost: noop,
+      onTransformationChange: noop,
+      onDirect: noop,
+      onExportStill: noop,
+      onExportScene: noop,
+    }));
+    expect(html).toContain('disabled');
+  });
+
   it('prompting state renders editable default prompt and Generate directions', () => {
     const html = render({ ...createInitialForgeState(), mode: 'prompting', parcelSelected: true });
     expect(html).toContain('Generate directions');

@@ -9,6 +9,7 @@ import {
 export interface ForgeControlsProps {
   state: ForgeState;
   compact?: boolean;
+  mapReady?: boolean;
   onOpen: () => void;
   onClose: () => void;
   onSelectParcel: () => void;
@@ -25,6 +26,7 @@ export interface ForgeControlsProps {
 export function ForgeControls({
   state,
   compact = false,
+  mapReady = true,
   onOpen,
   onClose,
   onSelectParcel,
@@ -43,7 +45,7 @@ export function ForgeControls({
   return (
     <div className={`wl-forge ${compact ? 'compact' : ''} ${state.mode}`} data-forge-mode={state.mode}>
       {state.mode === 'closed' && (
-        <button type="button" className="wl-forge-enter" onClick={onOpen}>
+        <button type="button" className="wl-forge-enter" onClick={onOpen} disabled={!mapReady}>
           Enter FORGE
         </button>
       )}

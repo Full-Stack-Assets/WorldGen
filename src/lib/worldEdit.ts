@@ -34,6 +34,14 @@ export function paintBiome(
       cell.isLake = biome === 'lake';
     }
   }
+  next.rivers = [];
+  next.lakes = [];
+  for (const row of next.cells) {
+    for (const cell of row) {
+      if (cell.isRiver) next.rivers.push({ x: cell.x, y: cell.y });
+      if (cell.isLake) next.lakes.push({ x: cell.x, y: cell.y });
+    }
+  }
   return next;
 }
 

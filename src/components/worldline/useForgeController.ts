@@ -50,7 +50,7 @@ export function useForgeController(
   reducedMotion: boolean,
 ): ForgeController {
   const [state, setState] = useState<ForgeState>(() => createInitialForgeState());
-  const directingRef = useRef(false);
+  const cancelDirectorRef = useRef<(() => void) | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -58,7 +58,20 @@ export function useForgeController(
     paint(mapRef.current, next, next.mode !== 'closed', selected);
   }, [mapRef]);
 
+  const abortDirector = useCallback(() => {
+    cancelDirectorRef.current?.();
+    cancelDirectorRef.current = null;
+  }, []);
+
   const open = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) {
+      setState((current) => ({
+        ...current,
+        status: 'The Earth surface is still loading.',
+      }));
+      return;
+    }
     journey.pause();
     void journey.selectStage(PARCEL_STAGE_INDEX);
     const next: ForgeState = {
@@ -67,23 +80,26 @@ export function useForgeController(
       status: 'Select the waterfront parcel. FORGE remains a visual concept lab.',
     };
     setState(next);
-    setForgeVisibility(mapRef.current as MapLibreMap, true);
-    setForgeSelection(mapRef.current as MapLibreMap, false);
+    setForgeVisibility(map, true);
+    setForgeSelection(map, false);
     sync(next, false);
   }, [journey, mapRef, sync]);
 
   const close = useCallback(() => {
-    directingRef.current = false;
+    abortDirector();
     const next = createInitialForgeState();
     setState(next);
-    if (mapRef.current) {
-      setForgeVisibility(mapRef.current, false);
-      setForgeSelection(mapRef.current, false);
+    const map = mapRef.current;
+    if (map) {
+      setForgeVisibility(map, false);
+      setForgeSelection(map, false);
     }
     journey.exit();
-  }, [journey, mapRef]);
+  }, [journey, mapRef, abortDirector]);
 
   const selectParcel = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
     const next: ForgeState = {
       ...stateRef.current,
       mode: 'prompting',
@@ -91,7 +107,7 @@ export function useForgeController(
       status: 'Parcel selected. Describe a visual direction.',
     };
     setState(next);
-    setForgeSelection(mapRef.current as MapLibreMap, true);
+    setForgeSelection(map, true);
     sync(next, true);
   }, [mapRef, sync]);
 
@@ -140,21 +156,38 @@ export function useForgeController(
     const map = mapRef.current;
     const variant = forgeVariant(stateRef.current.variantId);
     if (!map) return;
-    directingRef.current = true;
+    abortDirector();
     setState((current) => ({ ...current, mode: 'directing', status: 'Director path playing. Escape to stop.' }));
     let cancelled = false;
-    const stop = () => {
-      cancelled = true;
-      directingRef.current = false;
-      map.stop();
-      setState((current) => current.mode === 'directing' ? { ...current, mode: 'editing', status: 'Director stopped.' } : current);
-    };
+    let timer: number | null = null;
+    let settleWait: (() => void) | null = null;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') stop();
     };
     const onHidden = () => {
       if (document.hidden) stop();
     };
+    const abort = () => {
+      cancelled = true;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+      settleWait?.();
+      settleWait = null;
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('visibilitychange', onHidden);
+      map.stop();
+    };
+    const stop = () => {
+      if (cancelled) return;
+      abort();
+      cancelDirectorRef.current = null;
+      setState((current) => (
+        current.mode === 'directing'
+          ? { ...current, mode: 'editing', status: 'Director stopped.' }
+          : current
+      ));
+    };
+    cancelDirectorRef.current = abort;
     window.addEventListener('keydown', onKey);
     document.addEventListener('visibilitychange', onHidden);
     const run = async () => {
@@ -168,17 +201,21 @@ export function useForgeController(
           bearing: shot.bearing,
           duration: shot.durationMs,
         });
-        await new Promise((resolve) => window.setTimeout(resolve, shot.durationMs));
+        await new Promise<void>((resolve) => {
+          settleWait = resolve;
+          timer = window.setTimeout(resolve, shot.durationMs);
+        });
       }
       window.removeEventListener('keydown', onKey);
       document.removeEventListener('visibilitychange', onHidden);
+      if (timer !== null) window.clearTimeout(timer);
       if (!cancelled) {
-        directingRef.current = false;
+        cancelDirectorRef.current = null;
         setState((current) => ({ ...current, mode: 'editing', status: 'Director complete. Still a visual concept.' }));
       }
     };
     void run();
-  }, [mapRef, reducedMotion]);
+  }, [mapRef, reducedMotion, abortDirector]);
 
   const exportStill = useCallback(async () => {
     await downloadForgeStill(mapRef.current?.getCanvas() ?? null);
@@ -189,7 +226,8 @@ export function useForgeController(
   }, [mapRef]);
 
   useEffect(() => () => {
-    directingRef.current = false;
+    cancelDirectorRef.current?.();
+    cancelDirectorRef.current = null;
   }, []);
 
   return {

@@ -69,4 +69,18 @@ describe('parseShareParams', () => {
     expect(parsed?.octaves).toBe(5);
     expect(parsed?.persistence).toBeUndefined();
   });
+
+  it('clamps grid size and climate knobs to supported control bounds', () => {
+    window.history.replaceState({}, '', '/?seed=9ix&w=1000000&h=-4&scale=3&sea=9&oct=99&persist=2&lac=50&moist=1&temp=900');
+    const parsed = parseShareParams();
+    expect(parsed?.width).toBe(320);
+    expect(parsed?.height).toBe(64);
+    expect(parsed?.scale).toBe(30);
+    expect(parsed?.seaLevel).toBe(0.55);
+    expect(parsed?.octaves).toBe(8);
+    expect(parsed?.persistence).toBe(0.8);
+    expect(parsed?.lacunarity).toBe(4);
+    expect(parsed?.moistureScale).toBe(30);
+    expect(parsed?.temperatureScale).toBe(100);
+  });
 });

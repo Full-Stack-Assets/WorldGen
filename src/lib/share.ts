@@ -5,17 +5,25 @@ const NUMERIC_PARAMS: Array<{
   key: keyof WorldConfig;
   param: string;
   parse: (value: string) => number;
+  min: number;
+  max: number;
+  integer?: boolean;
 }> = [
-  { key: 'scale', param: 'scale', parse: parseFloat },
-  { key: 'seaLevel', param: 'sea', parse: parseFloat },
-  { key: 'octaves', param: 'oct', parse: (v) => parseInt(v, 10) },
-  { key: 'persistence', param: 'persist', parse: parseFloat },
-  { key: 'lacunarity', param: 'lac', parse: parseFloat },
-  { key: 'moistureScale', param: 'moist', parse: parseFloat },
-  { key: 'temperatureScale', param: 'temp', parse: parseFloat },
-  { key: 'width', param: 'w', parse: (v) => parseInt(v, 10) },
-  { key: 'height', param: 'h', parse: (v) => parseInt(v, 10) },
+  { key: 'scale', param: 'scale', parse: parseFloat, min: 30, max: 150 },
+  { key: 'seaLevel', param: 'sea', parse: parseFloat, min: 0.2, max: 0.55 },
+  { key: 'octaves', param: 'oct', parse: (v) => parseInt(v, 10), min: 1, max: 8, integer: true },
+  { key: 'persistence', param: 'persist', parse: parseFloat, min: 0.2, max: 0.8 },
+  { key: 'lacunarity', param: 'lac', parse: parseFloat, min: 1, max: 4 },
+  { key: 'moistureScale', param: 'moist', parse: parseFloat, min: 30, max: 100 },
+  { key: 'temperatureScale', param: 'temp', parse: parseFloat, min: 30, max: 100 },
+  { key: 'width', param: 'w', parse: (v) => parseInt(v, 10), min: 64, max: 320, integer: true },
+  { key: 'height', param: 'h', parse: (v) => parseInt(v, 10), min: 64, max: 320, integer: true },
 ];
+
+function clampShareValue(value: number, min: number, max: number, integer?: boolean): number {
+  const clamped = Math.min(max, Math.max(min, value));
+  return integer ? Math.round(clamped) : clamped;
+}
 
 export function buildShareUrl(config: WorldConfig): string {
   const base = import.meta.env.BASE_URL || '/';
@@ -36,12 +44,12 @@ export function parseShareParams(): Partial<WorldConfig> | null {
   if (!seed) return null;
 
   const config: Partial<WorldConfig> = { seed: parseSeed(seed) };
-  for (const { key, param, parse } of NUMERIC_PARAMS) {
+  for (const { key, param, parse, min, max, integer } of NUMERIC_PARAMS) {
     const raw = params.get(param);
     if (raw == null || raw === '') continue;
     const value = parse(raw);
     if (Number.isFinite(value)) {
-      (config as Record<string, number>)[key] = value;
+      (config as Record<string, number>)[key] = clampShareValue(value, min, max, integer);
     }
   }
   return config;

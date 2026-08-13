@@ -21,4 +21,15 @@ describe('generated world editor', () => {
     expect(placed?.name).toBe('Hearthmere');
     expect(placed?.type).toBe('town');
   });
+
+  it('keeps river and lake feature lists aligned with painted cells', () => {
+    const painted = paintBiome(world, 3, 3, 'river', 0);
+    expect(painted.cells[3][3].isRiver).toBe(true);
+    expect(painted.rivers).toEqual(
+      expect.arrayContaining([{ x: 3, y: 3 }]),
+    );
+    const cleared = paintBiome(painted, 3, 3, 'grassland', 0);
+    expect(cleared.cells[3][3].isRiver).toBe(false);
+    expect(cleared.rivers.some((point) => point.x === 3 && point.y === 3)).toBe(false);
+  });
 });
