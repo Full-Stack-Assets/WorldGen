@@ -1,6 +1,7 @@
 import { configureFlagshipBaseLayers } from './flagshipBaseLayers';
 import { addFlagshipConceptLayers } from './flagshipConceptLayers';
 import { FLAGSHIP_STAGES } from './flagshipSequence';
+import { addForgeLayers } from './forgeMapLayers';
 import {
   chooseEarthProjection,
   ensureMapLibre,
@@ -64,6 +65,7 @@ export async function createFlagshipMap({
         );
         addFlagshipConceptLayers(map);
         addSceneMotionLayer(map);
+        addForgeLayers(map);
       } catch {
         // Optional visual layers must never break the base map.
       }
