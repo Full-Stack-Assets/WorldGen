@@ -22,7 +22,7 @@ import { deriveWeather } from './lib/weather';
 import { createEarthRuntimeStatus } from './worldline/earthRuntime';
 import { FIRST_CONTACT_STORAGE_KEY, shouldShowFirstContact } from './worldline/firstContact';
 import { createProviderRegistry, requestedProviderForWorld, resolveSurfaceProvider } from './worldline/providers';
-import { createInitialWorldlineState } from './worldline/state';
+import { createFlagshipWorldlineState } from './worldline/state';
 import type { WorldlineState } from './worldline/types';
 import './styles/index.css';
 
@@ -56,7 +56,7 @@ export default function App() {
   } = useWorldGenerator();
   const { timeOfDay } = useDayNightCycle();
   const isPro = useProStatus();
-  const [worldline, setWorldline] = useState<WorldlineState>(() => createInitialWorldlineState());
+  const [worldline, setWorldline] = useState<WorldlineState>(() => createFlagshipWorldlineState());
   const [openEarthFailure, setOpenEarthFailure] = useState<string | null>(null);
   const [firstContactVisible, setFirstContactVisible] = useState(initialFirstContactVisibility);
   const stats = useMemo(() => (world ? computeWorldStats(world) : null), [world]);
