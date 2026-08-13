@@ -172,7 +172,7 @@ npm test
 npm run build
 ```
 
-CI runs the same type-check/test/build gate on pull requests and `main`. The canonical production application is the Node service at `https://nowfable.com`; GitHub Pages remains a static fallback artifact rather than the primary deployment.
+CI runs the same type-check/test/build gate on pull requests and `main`. The canonical production application is the Node service at `https://nowfable.com`; GitHub Pages remains a static fallback artifact rather than the primary deployment. The GitHub repository website field should also point at `https://nowfable.com`. Preview-host GitHub Apps are not part of the production contract.
 
 ## Optional AI lore
 
