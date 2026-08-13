@@ -1,43 +1,61 @@
-# WorldGen / Worldline 1.0
+# WorldGen / Worldline 2.0
 
 **WorldGen is the canonical rendering/runtime repository for Worldline.**
 
-**Worldline 1.0 · Worldline One** is an evidence-aware visual simulation environment for navigating 3D worlds through time, branching futures, recursive research history, extraterrestrial worlds, and a deterministic playable worldline experience.
+**Worldline 2.0 · Worldline Studio** is an evidence-aware full-stack simulation environment for navigating 3D worlds through time, branching futures, recursive research history, extraterrestrial worlds, deterministic Chronos experiences, and persistent scenario projects.
 
-**Production:** https://full-stack-assets.github.io/WorldGen/
+**Production:** https://nowfable.com
 
-Release notes: [`v0.2`](docs/WORLDLINE_V0.2.md) · [`v0.3`](docs/WORLDLINE_V0.3.md) · [`v0.5`](docs/WORLDLINE_V0.5.md) · [`v0.7`](docs/WORLDLINE_V0.7.md) · [`v1.0`](docs/WORLDLINE_V1.0.md)
+**Full-stack fallback origin:** https://worldline-production.onrender.com
+
+Release notes: [`v0.2`](docs/WORLDLINE_V0.2.md) · [`v0.3`](docs/WORLDLINE_V0.3.md) · [`v0.5`](docs/WORLDLINE_V0.5.md) · [`v0.7`](docs/WORLDLINE_V0.7.md) · [`v1.0`](docs/WORLDLINE_V1.0.md) · [`v2.0`](docs/WORLDLINE_V2.0.md)
 
 Runtime contract: [`docs/WORLDLINE_RUNTIME.md`](docs/WORLDLINE_RUNTIME.md)
 
+Research synthesis: [`docs/WORLDLINE_OMPHALIS_SYNTHESIS.md`](docs/WORLDLINE_OMPHALIS_SYNTHESIS.md)
+
 ## The product
 
-Worldline keeps the human-facing grammar deliberately understandable: **3D space + navigable time**. Possibility, evidence, uncertainty, memory, model disagreement, branch ancestry, and research history appear as lenses rather than competing geometric axes.
+Worldline keeps the human-facing grammar deliberately understandable: **3D space + navigable time**. Possibility, evidence, uncertainty, memory, model disagreement, branch ancestry, research history, and scenario interventions appear as lenses rather than competing geometric axes.
 
 Primary surfaces:
 
 - **World** — procedural worlds or free Open Earth.
 - **Time** — Playback, Time Slice, Temporal Parallax, Time Volume, and independent source-time inspection.
-- **Futures** — deterministic branches, Future Families, and Future Landscape.
-- **Compare** — committed-state Difference Lens.
-- **Data** — attached simulation metrics, planetary state, and provenance.
-- **Library** — Earth, Solar-System worlds, speculative world families, and exports.
+- **Futures** — deterministic branches, Future Families, Future Landscape, and explicit interventions.
+- **Compare** — committed-state Difference Lens and scenario-result comparison.
+- **Data** — attached simulation metrics, planetary state, provenance, and source classification.
+- **Library** — Earth, Solar-System worlds, speculative world families, saved Studio projects, and exports.
 
 Secondary experiences:
 
 - **Truth Lens** — inspect epistemic rendering state.
-- **Mechanics** — evidence, schemas, release state, benchmarks, research lineage, and constitutional gates.
+- **Mechanics** — evidence, schemas, release state, benchmarks, research lineage, constitutional gates, and the World Model Lab.
 - **Chronos** — playable deterministic Anchor/Echo/Convergence worldline arena.
 
 Worldline explicitly separates `OBSERVED`, `RECONSTRUCTED`, `SIMULATED`, `GENERATED`, and `SPECULATIVE` state.
 
-## First Contact
+## Worldline Studio
 
-A fresh normal-motion visit opens with a **1.4 second immediately skippable** Worldline sequence while the actual application initializes underneath it. Users with reduced-motion preferences bypass the cinematic. A World control can replay it later.
+Worldline 2.0 adds persistent Studio projects and deterministic experiment sessions.
+
+A Studio project can preserve:
+
+- canonical world state;
+- branch and selected time;
+- explicit intervention objects;
+- deterministic experiment receipts;
+- Future Family membership;
+- visualization preferences;
+- Worldpack export data.
+
+Local storage remains an offline mirror. Production persistence is provided through the full-stack Node service and the dedicated **Worldline v2 Production** Supabase database.
+
+Scenario outputs remain `SIMULATED`. Saving a project never upgrades them to observed evidence.
 
 ## Free-first Earth
 
-Worldline 1.0 does **not** require Google, Cesium, Earth Engine, or another paid geospatial credential.
+Worldline does **not** require Google, Cesium, Earth Engine, or another paid geospatial credential for the mandatory path.
 
 New Bedford World #001 uses:
 
@@ -61,7 +79,7 @@ Changing one does not silently rewrite the other, and source gaps are not fabric
 
 ## Future Landscape
 
-Worldline 1.0 adds a deterministic SVG Future Landscape derived from committed branch metric vectors. It preserves exact parent-child ancestry and computes normalized divergence from the root branch.
+Worldline renders deterministic Future Landscape geometry derived from committed branch metric vectors. It preserves exact parent-child ancestry and computes normalized divergence from the root branch.
 
 The visualization is explicitly labeled:
 
@@ -75,11 +93,24 @@ The B+ loop is:
 
 `OBSERVE → DETECT → EXPLAIN → CHALLENGE → EXPERIMENT → BUILD → EXECUTE → COMPARE → VERIFY → PROMOTE/REJECT → MONITOR → REALITY WAKE → REOPEN`
 
-Research history persists locally as immutable observation, anomaly, hypothesis, frozen evaluator, independent verification, promotion, Reality Wake, and reopening receipts.
+Research history persists as immutable observation, anomaly, hypothesis, frozen evaluator, independent verification, promotion, Reality Wake, and reopening receipts.
 
-**Model Worldline** derives evidence/decision ancestry from the ledger itself. Corrupt stored history fails closed with a warning rather than being silently repaired.
+Worldline 2.0 adds bounded champion/challenger memory, deterministic experience replay, rollback receipts, and typed recursive skill compression. Degraded challengers do not silently replace a stronger champion.
 
 Only reversible machine-verifiable low-risk rendering/data-normalization candidates are eligible for automatic promotion. Architecture, policy, model, benchmark, authority, and scientific-claim changes remain gated.
+
+## World Model Lab
+
+Mechanics exposes research-reference architectures for systems such as Genie 3 and NVIDIA Cosmos 3 without claiming those systems are connected.
+
+The shared evaluation receipt schema uses four top-level 4DWorldBench dimensions:
+
+- Perceptual Quality
+- Condition-4D Alignment
+- Physical Realism
+- 4D Consistency
+
+A world-model adapter has no score until an actual evaluation produces an executed evidence receipt. Adapter readiness is **not** benchmark success.
 
 ## Chronos Paradigm
 
@@ -100,32 +131,22 @@ The catalog includes:
 - Titan;
 - three Asterion speculative variants.
 
-Named Solar-System bodies can remain `OBSERVED` celestial identities while their current browser-local surfaces remain explicitly `GENERATED`. Asterion is entirely `SPECULATIVE`.
+Named Solar-System bodies can remain `OBSERVED` celestial identities while browser-local surfaces remain explicitly `GENERATED`. Asterion is entirely `SPECULATIVE`.
 
 Planetary state separately exposes physical metadata, terrain-source status, rendered-surface class, light-time, reference frame, evidence references, and multiple habitability dimensions.
 
-## Benchmark Lab
+## Schemas
 
-Worldline provides deterministic compatibility/export contracts for 4DWorldBench-style temporal render bundles and Omni-WorldBench-style action/state-transition traces.
+Current major schemas include:
 
-Adapter readiness is **not** benchmark success. No external benchmark score is attached without an executed completion receipt.
-
-## Chronos interchange
-
-`worldline-chronos-v0.7` is a deterministic provider-independent export containing world/surface epistemic classes, family/variant identity, reference-frame state, terrain-source status, time, branch ancestry, events, metrics, seeds, and replay commitment.
-
-It is an interchange contract, not a claim that the browser ships a full Unreal/Cesium game.
-
-## Release identity
-
-Mechanics exposes:
-
-- `Worldline 1.0.0 · Worldline One`
 - `worldline-state-v1`
+- `worldline-project-v2`
+- `worldline-experiment-v2`
+- `worldline-worldpack-v2`
 - `worldline-research-ledger-v0.5`
 - `worldline-chronos-v0.7`
-- mandatory free-first provider classes
-- exact deployed Git commit when built by GitHub Pages
+- `worldline-skill-compression-v2`
+- `worldline-improvement-memory-v2`
 
 ## Quick start
 
@@ -136,6 +157,13 @@ npm run dev
 
 Open `http://localhost:5173`.
 
+For the full-stack production-style server after building:
+
+```bash
+npm run build
+npm start
+```
+
 ## Verification
 
 ```bash
@@ -144,17 +172,17 @@ npm test
 npm run build
 ```
 
-CI runs the same type-check/test/build gate on pull requests and `main`. GitHub Pages deploys from `main` with `VITE_BASE=/WorldGen/` and stamps the production bundle with the deployed Git SHA.
+CI runs the same type-check/test/build gate on pull requests and `main`. The canonical production application is the Node service at `https://nowfable.com`; GitHub Pages remains a static fallback artifact rather than the primary deployment.
 
 ## Optional AI lore
 
-The original Gemini-powered lore feature remains optional. Earth, branching, Discovery Engine, Cosmos, Chronos, and the mandatory production path do not require an AI key.
+The original Gemini-powered lore feature remains optional. Earth, branching, Studio persistence, Discovery Engine, Cosmos, Chronos, and the mandatory production path do not require that feature.
 
 ## Evidence boundary
 
-**Worldline 1.0 is not a calibrated forecast or oracle.** It does not claim a fully validated municipal digital twin, realistic interacting human populations, formal manifold geometry, external benchmark success without executed receipts, observed exoplanet surfaces without evidence, physically real Chronos abilities, or unrestricted self-modification.
+**Worldline 2.0 is not a calibrated forecast or oracle.** It does not claim a fully validated municipal digital twin, realistic interacting human populations, external benchmark success without executed receipts, connected external world-model runtimes without an executing adapter, observed exoplanet surfaces without evidence, physically real Chronos abilities, or unrestricted self-modification.
 
-**Visual fidelity must not outrun epistemic fidelity.**
+**Visual and model capability claims may never outrun the executed evidence attached to the active Worldline state.**
 
 ## License
 
