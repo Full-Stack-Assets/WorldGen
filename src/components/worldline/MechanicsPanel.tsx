@@ -4,6 +4,7 @@ import type { WorldlineState } from '../../worldline/types';
 import { BenchmarkLab } from './BenchmarkLab';
 import { RecursiveLoopPanel } from './RecursiveLoopPanel';
 import { ReleaseStatus } from './ReleaseStatus';
+import { WorldModelReferencePanel } from './WorldModelReferencePanel';
 
 export function MechanicsPanel({ state, project }: { state: WorldlineState; project?: WorldProject }) {
   const branch = state.branches[state.activeBranchId];
@@ -38,6 +39,7 @@ export function MechanicsPanel({ state, project }: { state: WorldlineState; proj
         </section>
       )}
       <ReleaseStatus />
+      <WorldModelReferencePanel />
       <BenchmarkLab state={state} />
       <RecursiveLoopPanel />
     </section>
