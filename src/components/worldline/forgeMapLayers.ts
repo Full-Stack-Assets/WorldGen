@@ -140,8 +140,6 @@ export function setForgeVisibility(map: MapLibreMap, visible: boolean): void {
 export function setForgeSelection(map: MapLibreMap, selected: boolean): void {
   setPaint(map, FORGE_LAYER_IDS[1], 'line-width', selected ? 5 : 2);
   setPaint(map, FORGE_LAYER_IDS[1], 'line-blur', selected ? 1.8 : 0.8);
-  setPaint(map, FORGE_LAYER_IDS[1], 'line-opacity', selected ? 1 : 0.76);
-  setPaint(map, FORGE_LAYER_IDS[0], 'fill-opacity', selected ? 0.22 : 0.12);
 }
 
 export function applyForgeScene(
@@ -163,8 +161,19 @@ export function applyForgeScene(
   setPaint(map, FORGE_LAYER_IDS[5], 'circle-color', variant.palette.glow);
 
   const visible = input.visible;
-  setPaint(map, FORGE_LAYER_IDS[0], 'fill-opacity', visible ? 0.2 * ghost : 0);
-  setPaint(map, FORGE_LAYER_IDS[1], 'line-opacity', visible ? 0.92 : 0);
+  setForgeSelection(map, input.selected);
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[0],
+    'fill-opacity',
+    visible ? (input.selected ? 0.22 : 0.12) * ghost : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[1],
+    'line-opacity',
+    visible ? (input.selected ? 1 : 0.76) : 0,
+  );
   setPaint(
     map,
     FORGE_LAYER_IDS[2],
@@ -195,5 +204,4 @@ export function applyForgeScene(
     'circle-opacity',
     visible && transformation > 0 ? variant.glow * transformation * ghost : 0,
   );
-  setForgeSelection(map, input.selected);
 }
