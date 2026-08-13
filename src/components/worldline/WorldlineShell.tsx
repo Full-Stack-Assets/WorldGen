@@ -3,6 +3,7 @@ import type { EarthRuntimeStatus } from '../../worldline/earthRuntime';
 import { runExperiment } from '../../worldline/experiments';
 import { createIntervention, type InterventionInput } from '../../worldline/interventions';
 import type { ProviderStatus } from '../../worldline/providers';
+import { deleteRemoteProject, listRemoteProjects, syncRemoteProject } from '../../worldline/remoteStudio';
 import { createBranch, selectBranch, selectWorld, selectYear } from '../../worldline/state';
 import { createWorldProject, type WorldProject } from '../../worldline/studioProjects';
 import { createStudioProjectStore } from '../../worldline/studioStorage';
@@ -46,6 +47,15 @@ function latestSnapshotAtOrBefore(state: WorldlineState): WorldSnapshot | null {
   return eligible.at(-1) ?? null;
 }
 
+function mergeProjects(local: WorldProject[], remote: WorldProject[]): WorldProject[] {
+  const merged = new Map<string, WorldProject>();
+  for (const project of [...local, ...remote]) {
+    const current = merged.get(project.id);
+    if (!current || project.updatedAt > current.updatedAt) merged.set(project.id, structuredClone(project));
+  }
+  return [...merged.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+}
+
 export function WorldlineShell({
   state,
   onStateChange,
@@ -83,17 +93,26 @@ export function WorldlineShell({
   const [selectedExperimentId, setSelectedExperimentId] = useState<string | null>(null);
   const [studioNotice, setStudioNotice] = useState<string | null>(null);
 
-  const refreshProjects = () => {
-    if (!studioStore) return;
+  const refreshProjects = async () => {
+    let local: WorldProject[] = [];
+    if (studioStore) {
+      try {
+        local = studioStore.list();
+      } catch {
+        setStudioNotice('Local cache is unavailable. Remote Studio persistence remains available.');
+      }
+    }
     try {
-      setSavedProjects(studioStore.list());
+      const remote = await listRemoteProjects();
+      setSavedProjects(mergeProjects(local, remote));
     } catch {
-      setStudioNotice('Local project storage is unavailable. Studio remains usable in memory.');
+      setSavedProjects(local);
+      if (local.length > 0) setStudioNotice('Remote persistence is temporarily unavailable. Local cache remains active.');
     }
   };
 
   useEffect(() => {
-    refreshProjects();
+    void refreshProjects();
   }, [studioStore]);
 
   const materializeProject = (nextState: WorldlineState = state): WorldProject => ({
@@ -138,23 +157,31 @@ export function WorldlineShell({
     setTruthLens(false);
     setSelectedExperimentId(null);
     setSaved(false);
-    setStudioNotice('New in-memory Studio project created.');
+    setStudioNotice('New Studio project created. Save to persist it locally and remotely.');
   };
 
-  const saveProject = () => {
-    if (!studioStore) {
-      setStudioNotice('Local storage is unavailable. Export a Worldpack to preserve this project.');
-      return;
-    }
+  const saveProject = async () => {
     const next = { ...materializeProject(), updatedAt: timestamp() };
+    let localSaved = false;
+    if (studioStore) {
+      try {
+        studioStore.save(next);
+        localSaved = true;
+      } catch {
+        localSaved = false;
+      }
+    }
     try {
-      const stored = studioStore.save(next);
-      setProject(stored);
+      await syncRemoteProject(next);
+      setProject(next);
       setSaved(true);
-      refreshProjects();
-      setStudioNotice('Project saved locally.');
+      await refreshProjects();
+      setStudioNotice(localSaved ? 'Project saved to production database and local cache.' : 'Project saved to production database.');
     } catch {
-      setStudioNotice('Project could not be saved locally. Export remains available.');
+      setProject(next);
+      setSaved(localSaved);
+      await refreshProjects();
+      setStudioNotice(localSaved ? 'Remote save failed; project is preserved in the local cache.' : 'Project could not be persisted. Export remains available.');
     }
   };
 
@@ -196,32 +223,37 @@ export function WorldlineShell({
       setTruthLens(imported.preferences.truthLens);
       setSelectedExperimentId(imported.experiments.at(-1)?.id ?? null);
       setSaved(false);
-      setStudioNotice('Worldpack imported into memory. Save locally to persist it on this device.');
+      setStudioNotice('Worldpack imported into memory. Save to persist it to the production database.');
     } catch {
       setStudioNotice('Worldpack import failed without changing the current project.');
     }
   };
 
   const loadProject = (projectId: string) => {
-    const loaded = studioStore?.load(projectId);
+    const loaded = studioStore?.load(projectId) ?? savedProjects.find((item) => item.id === projectId) ?? null;
     if (!loaded) {
       setStudioNotice('Saved project could not be loaded.');
       return;
     }
-    setProject(loaded);
+    setProject(structuredClone(loaded));
     onStateChange(structuredClone(loaded.state));
     setSurface(loaded.preferences.primarySurface);
     setTruthLens(loaded.preferences.truthLens);
     setSelectedExperimentId(loaded.experiments.at(-1)?.id ?? null);
     setSaved(true);
-    setStudioNotice('Saved Studio project loaded.');
+    setStudioNotice('Persisted Studio project loaded.');
   };
 
-  const deleteProject = () => {
+  const deleteProject = async () => {
     if (studioStore) studioStore.delete(project.id);
-    refreshProjects();
+    try {
+      await deleteRemoteProject(project.id);
+      setStudioNotice('Project removed from production database and local cache.');
+    } catch {
+      setStudioNotice('Local cache entry removed; remote deletion could not be confirmed.');
+    }
+    await refreshProjects();
     newProject();
-    setStudioNotice('Local project removed. The current world state was not deleted.');
   };
 
   const addIntervention = (input: InterventionInput) => {
@@ -264,7 +296,7 @@ export function WorldlineShell({
     setProject((current) => ({ ...current, experiments: [...current.experiments, experiment] }));
     setSelectedExperimentId(experiment.id);
     setSaved(false);
-    setStudioNotice(`Experiment committed from ${baseline.year} baseline. Scenario result is not a probability forecast.`);
+    setStudioNotice(`Experiment committed from ${baseline.year} baseline. Scenario result is not a calibrated forecast.`);
   };
 
   return (
@@ -278,11 +310,11 @@ export function WorldlineShell({
           projects={savedProjects}
           saved={saved}
           onNew={newProject}
-          onSave={saveProject}
+          onSave={() => void saveProject()}
           onExport={exportProject}
           onImport={(file) => void importProject(file)}
           onLoad={loadProject}
-          onDelete={savedProjects.some((item) => item.id === project.id) ? deleteProject : undefined}
+          onDelete={savedProjects.some((item) => item.id === project.id) ? () => void deleteProject() : undefined}
         />
         <ProviderStatusStrip state={state} provider={providerStatus} runtimeStatus={earthRuntime} />
         <nav className="wl-nav glass-panel" aria-label="Worldline primary navigation">
