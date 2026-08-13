@@ -2,6 +2,14 @@
 
 Worldline 2.0 turns the v1 observatory into a persistent full-stack simulation studio while preserving the original evidence boundary: generated and simulated state must never masquerade as observed reality.
 
+## Production
+
+Canonical production domain: **https://nowfable.com**
+
+Full-stack fallback origin: **https://worldline-production.onrender.com**
+
+The Node service on Render is the canonical application runtime. GitHub Pages remains a static fallback artifact rather than the primary production target.
+
 ## Major additions
 
 - Versioned Worldline Studio projects with durable local/offline state and remote production persistence.
@@ -52,4 +60,4 @@ The governing invariant is:
 
 Canonical application source is `Full-Stack-Assets/WorldGen` on `main`.
 
-Production is a Node web service with server-side persistence through the dedicated **Worldline v2 Production** Supabase project. Static Pages output is retained as a fallback artifact rather than the canonical full-stack target.
+Production is a Node web service with server-side persistence through the dedicated **Worldline v2 Production** Supabase project. The custom domain `nowfable.com` is the canonical public origin. Static Pages output is retained as a fallback artifact rather than the canonical full-stack target.
