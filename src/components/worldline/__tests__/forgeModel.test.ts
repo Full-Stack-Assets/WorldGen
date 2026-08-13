@@ -3,10 +3,10 @@ import {
   DEFAULT_FORGE_PROMPT,
   FORGE_VARIANTS,
   createInitialForgeState,
-  enterForgeState,
   matchForgePrompt,
   serializeForgeScenePackage,
 } from '../forgeModel';
+import { enterForgeState } from '../forgeStateTransitions';
 
 describe('WorldGen FORGE model', () => {
   it('starts closed with the locked v5 defaults', () => {
