@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FORGE_PROMPT, FORGE_VARIANTS, createInitialForgeState, matchForgePrompt, serializeForgeScenePackage } from '../forgeModel';
+import {
+  DEFAULT_FORGE_PROMPT,
+  FORGE_VARIANTS,
+  createInitialForgeState,
+  enterForgeState,
+  matchForgePrompt,
+  serializeForgeScenePackage,
+} from '../forgeModel';
 
 describe('WorldGen FORGE model', () => {
   it('starts closed with the locked v5 defaults', () => {
@@ -9,6 +16,24 @@ describe('WorldGen FORGE model', () => {
     expect(state.transformation).toBe(0.68);
     expect(state.ghostOpacity).toBe(0.46);
     expect(state.prompt).toBe(DEFAULT_FORGE_PROMPT);
+  });
+
+  it('starts a clean parcel-selection workflow when reopened', () => {
+    const state = enterForgeState({
+      ...createInitialForgeState(),
+      mode: 'editing',
+      generated: true,
+      parcelSelected: true,
+      transformation: 1,
+      ghostVisible: false,
+      status: 'Previous state',
+    });
+    expect(state.mode).toBe('selecting');
+    expect(state.generated).toBe(false);
+    expect(state.parcelSelected).toBe(false);
+    expect(state.transformation).toBe(0.68);
+    expect(state.ghostVisible).toBe(true);
+    expect(state.status).toBe('Select the illuminated waterfront parcel.');
   });
 
   it('exposes three materially distinct directions', () => {
