@@ -1,0 +1,111 @@
+.wl-forge {
+  pointer-events: auto;
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+}
+.wl-forge-enter {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(12, 18, 36, 0.82);
+  color: #e8f6ff;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font: 600 12px/1 "DM Sans", sans-serif;
+  box-shadow: 0 0 24px rgba(99, 223, 255, 0.28);
+}
+.wl-forge-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(720px, calc(100% - 24px));
+  max-height: 42vh;
+  overflow: auto;
+  padding: 14px 16px 12px;
+  border-radius: 18px;
+  background: rgba(8, 12, 24, 0.78);
+  border: 1px solid rgba(160, 210, 255, 0.22);
+  backdrop-filter: blur(16px);
+  color: #eef6ff;
+}
+.wl-forge-dock-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wl-forge-concept {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #9be7ff;
+}
+.wl-forge-prompt textarea,
+.wl-forge-scrubber input {
+  width: 100%;
+}
+.wl-forge-prompt textarea {
+  min-height: 64px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.28);
+  color: inherit;
+  padding: 8px;
+}
+.wl-forge-ribbon,
+.wl-forge-seeds,
+.wl-forge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.wl-forge-ribbon button,
+.wl-forge-seeds button,
+.wl-forge-actions button,
+.wl-forge-primary {
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  padding: 0 12px;
+}
+.wl-forge-ribbon button.active,
+.wl-forge-actions button.active,
+.wl-forge-primary {
+  background: linear-gradient(180deg, rgba(99,223,255,0.28), rgba(155,124,255,0.18));
+}
+.wl-forge-copy,
+.wl-forge-disclosure,
+.wl-forge-status {
+  font-size: 12px;
+  opacity: 0.82;
+}
+.wl-forge-parcel-pulse {
+  animation: forgePulse 1.8s ease-in-out infinite;
+}
+@keyframes forgePulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@media (max-width: 820px) {
+  .wl-forge-dock {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    max-height: 48vh;
+    border-radius: 18px 18px 0 0;
+  }
+  .wl-forge-enter { right: 10px; top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-forge-parcel-pulse { animation: none; }
+}

@@ -1,9 +1,9 @@
-import { clearHistory } from '../lib/history';
+import { clearHistory, historyEntryToConfig, type HistoryEntry } from '../lib/history';
 import { useWorldHistory } from '../hooks/useWorldHistory';
 
 interface HistoryPanelProps {
   activeSeed: number;
-  onLoad: (seedString: string) => void;
+  onLoad: (entry: HistoryEntry) => void;
 }
 
 export function HistoryPanel({ activeSeed, onLoad }: HistoryPanelProps) {
@@ -25,13 +25,14 @@ export function HistoryPanel({ activeSeed, onLoad }: HistoryPanelProps) {
             key={entry.seed}
             type="button"
             className={`history-chip ${entry.seed === activeSeed ? 'active' : ''}`}
-            onClick={() => onLoad(entry.seedString)}
-            title={`Scale ${entry.scale} · Sea ${(entry.seaLevel * 100).toFixed(0)}% · ${entry.width}²`}
+            onClick={() => onLoad(entry)}
+            title={`Scale ${entry.scale} · Sea ${(entry.seaLevel * 100).toFixed(0)}% · ${entry.width}² · persist ${entry.persistence}`}
           >
             {entry.seedString}
           </button>
         ))}
       </div>
+      <p className="history-hint">Restores full terrain and climate settings ({Object.keys(historyEntryToConfig(history[0])).length} fields).</p>
     </div>
   );
 }

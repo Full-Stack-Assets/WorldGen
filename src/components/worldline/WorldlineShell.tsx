@@ -26,6 +26,8 @@ import './worldline-v05.css';
 import './worldline-v07.css';
 import './worldline-v10.css';
 import './worldline-v20.css';
+import './worldline-v21.css';
+import './worldline-future.css';
 
 export const NAV_ITEMS = ['WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY'] as const;
 export type WorldlineSurface = typeof NAV_ITEMS[number];
@@ -83,6 +85,7 @@ export function WorldlineShell({
   const [mechanicsOpen, setMechanicsOpen] = useState(false);
   const [truthLens, setTruthLens] = useState(false);
   const [chronosOpen, setChronosOpen] = useState(false);
+  const [exploreFocus, setExploreFocus] = useState(false);
   const [project, setProject] = useState<WorldProject>(() => createWorldProject(state, {
     title: projectTitle(state),
     now: timestamp(),
@@ -300,7 +303,7 @@ export function WorldlineShell({
   };
 
   return (
-    <main className={`wl-app ${truthLens ? `wl-truth-active ${truthClass}` : ''}`}>
+    <main className={`wl-app ${truthLens ? `wl-truth-active ${truthClass}` : ''} ${exploreFocus ? 'wl-explore-focus' : ''}`}>
       <div className="wl-scene">{scene}</div>
       <div className={`wl-atmosphere wl-atmosphere-${state.activeWorld.kind.toLowerCase()}`} aria-hidden="true" />
       <div className="wl-interface">
@@ -319,7 +322,15 @@ export function WorldlineShell({
         <ProviderStatusStrip state={state} provider={providerStatus} runtimeStatus={earthRuntime} />
         <nav className="wl-nav glass-panel" aria-label="Worldline primary navigation">
           {NAV_ITEMS.map((item) => <button type="button" key={item} className={surface === item ? 'active' : ''} onClick={() => changeSurface(item)}>{item}</button>)}
-          <TruthLens active={truthLens} onToggle={toggleTruthLens} />
+          <TruthLens
+            active={truthLens}
+            onToggle={toggleTruthLens}
+            inspectedClass={state.activeWorld.surfaceEpistemicClass ?? state.activeWorld.epistemicClass}
+            inspectedLabel={state.activeWorld.name}
+          />
+          <button type="button" className={exploreFocus ? 'active' : ''} onClick={() => setExploreFocus((value) => !value)}>
+            {exploreFocus ? 'Show chrome' : 'Focus world'}
+          </button>
           <button type="button" className={chronosOpen ? 'active wl-chronos-toggle' : 'wl-chronos-toggle'} onClick={() => setChronosOpen((value) => !value)}>CHRONOS</button>
           <button type="button" className={mechanicsOpen ? 'active mechanics' : 'mechanics'} onClick={() => setMechanicsOpen((value) => !value)}>MECHANICS</button>
         </nav>

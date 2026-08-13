@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getSourceTimelineForWorld, nearestSourceSnapshot } from '../../worldline/sourceTimeline';
+import { describeTimeMode, nextPlaybackYear, timeVolumeSamples } from '../../worldline/timeEngine';
 import { createTwinTimelineState } from '../../worldline/twinTimeline';
 import type { TimeMode, WorldlineState } from '../../worldline/types';
 
 const MODES: TimeMode[] = ['PLAYBACK', 'SLICE', 'PARALLAX', 'VOLUME'];
+const PLAYBACK_INTERVAL_MS = 800;
 
 export function TimeNavigator({
   state,
@@ -25,6 +27,36 @@ export function TimeNavigator({
 
   const sourceSelection = nearestSourceSnapshot(sourceTimeline, sourceYear);
   const twin = createTwinTimelineState(state.selectedYear, sourceYear);
+
+  const [playing, setPlaying] = useState(false);
+  const selectedYearRef = useRef(state.selectedYear);
+  const onYearRef = useRef(onYear);
+
+  useEffect(() => {
+    selectedYearRef.current = state.selectedYear;
+  }, [state.selectedYear]);
+
+  useEffect(() => {
+    onYearRef.current = onYear;
+  }, [onYear]);
+
+  useEffect(() => {
+    if (state.timeMode !== 'PLAYBACK') setPlaying(false);
+  }, [state.timeMode]);
+
+  useEffect(() => {
+    if (state.timeMode !== 'PLAYBACK' || !playing) return;
+    const timer = window.setInterval(() => {
+      const current = selectedYearRef.current;
+      const next = nextPlaybackYear(current);
+      onYearRef.current(next);
+    }, PLAYBACK_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [state.timeMode, playing]);
+
+  const volumeSamples = timeVolumeSamples(state.selectedYear, 3);
+  const volumeLowerYear = volumeSamples[0]?.year ?? state.selectedYear;
+  const volumeUpperYear = volumeSamples.at(-1)?.year ?? state.selectedYear;
 
   return (
     <section className="wl-panel wl-time-panel glass-panel">
@@ -66,6 +98,32 @@ export function TimeNavigator({
           </button>
         ))}
       </div>
+
+      {state.timeMode === 'PLAYBACK' && (
+        <div className="wl-time-playback">
+          <button
+            type="button"
+            className="wl-primary"
+            aria-pressed={playing}
+            onClick={() => setPlaying((value) => !value)}
+          >
+            {playing ? 'Pause' : 'Play'}
+          </button>
+          <p className="wl-help">{describeTimeMode('PLAYBACK')} Years loop from 2026 to 2046.</p>
+        </div>
+      )}
+
+      {state.timeMode === 'VOLUME' && (
+        <div className="wl-time-volume">
+          <p className="wl-help">{describeTimeMode('VOLUME')}</p>
+          <div className="wl-time-volume-readout">
+            <span>{volumeLowerYear}</span>
+            <strong>{state.selectedYear}</strong>
+            <span>{volumeUpperYear}</span>
+          </div>
+        </div>
+      )}
+
       <p className="wl-help">Observation time, reconstruction time, and simulation time remain distinct. The source selector inspects evidence history; the simulation slider moves the active worldline.</p>
     </section>
   );

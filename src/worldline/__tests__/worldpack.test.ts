@@ -38,5 +38,11 @@ describe('Worldpack interchange', () => {
     expect(text).toContain('"safe":"keep"');
     expect(worldpack.parseWorldpack('{bad').ok).toBe(false);
     expect(worldpack.parseWorldpack(JSON.stringify({ ...pack, schema: 'worldline-worldpack-v1' })).ok).toBe(false);
+    expect(worldpack.describeWorldpackPortability(pack)).toEqual({
+      schema: 'worldline-worldpack-v2',
+      offlineCapable: true,
+      credentialSanitized: true,
+      rendererAgnostic: true,
+    });
   });
 });

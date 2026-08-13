@@ -26,5 +26,8 @@ describe('OpenEarthView', () => {
     expect(html).toContain('WorldGen flagship cinematic sequence');
     expect(html).toContain('Play flagship flight');
     expect(html).toContain('Export WebM');
+    expect(html).toContain('Enter FORGE');
+    expect(html).not.toContain('causal graph');
+    expect((html.match(/wl-open-earth-map/g) ?? []).length).toBe(1);
   });
 });

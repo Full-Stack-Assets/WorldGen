@@ -25,6 +25,7 @@ export function PlanetaryStatePanel({ world }: { world: WorldRecord }) {
         {world.familyId && <div><dt>World family</dt><dd>{world.familyId} / {world.variantId}</dd></div>}
       </dl>
       <h3>Habitability Landscape</h3>
+      <p className="wl-help">Habitability is a landscape of independent axes, never a single authoritative score.</p>
       <dl>{Object.entries(planetary.habitability).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
       {planetary.physicalStateSources && planetary.physicalStateSources.length > 0 && <p className="wl-help">Physical-state references: {planetary.physicalStateSources.join(' · ')}. Rendering class is shown separately and does not inherit observational status from the body's identity.</p>}
     </section>

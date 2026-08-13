@@ -2,10 +2,13 @@ import { useCallback, useMemo, useRef } from 'react';
 import type { TimeMode } from '../../worldline/types';
 import { FlagshipAtmosphereOverlay } from './FlagshipAtmosphereOverlay';
 import { FlagshipControlsLayer } from './FlagshipControlsLayer';
+import { ForgeControls } from './ForgeControls';
 import type { MapLibreMap } from './maplibreRuntime';
 import { useFlagshipFlight as useCinematicJourney } from './useFlagshipFlight';
+import { useForgeController } from './useForgeController';
 import { useMountedEarthMap } from './useMountedEarthMap';
 import './flagship-sequence.css';
+import './forge.css';
 
 export { chooseEarthProjection } from './maplibreRuntime';
 
@@ -54,6 +57,7 @@ export function OpenEarthView({
     onCinematicStateChange,
   );
   const startAutoplay = useCallback(() => journey.play(0), [journey.play]);
+  const forge = useForgeController(mapRef, journey, reducedMotion);
 
   useMountedEarthMap({
     containerRef,
@@ -77,7 +81,22 @@ export function OpenEarthView({
         selectedYear={selectedYear}
         timeMode={timeMode}
       />
-      <FlagshipControlsLayer journey={journey} />
+      <FlagshipControlsLayer journey={journey} forgeOpen={forge.state.mode !== 'closed'} />
+      <ForgeControls
+        state={forge.state}
+        compact={compact}
+        onOpen={forge.open}
+        onClose={forge.close}
+        onSelectParcel={forge.selectParcel}
+        onPromptChange={forge.setPrompt}
+        onGenerate={forge.generate}
+        onSelectVariant={forge.selectVariant}
+        onToggleGhost={forge.toggleGhost}
+        onTransformationChange={forge.setTransformation}
+        onDirect={forge.direct}
+        onExportStill={() => void forge.exportStill()}
+        onExportScene={forge.exportScene}
+      />
     </div>
   );
 }

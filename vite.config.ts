@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'WorldGen — 3D Procedural Worlds',
-        short_name: 'WorldGen',
-        description: 'Generate cinematic 3D fantasy worlds from a seed — terrain, biomes, settlements, and AI lore, free in your browser.',
+        name: 'Worldline Studio — Evidence-Aware Worlds',
+        short_name: 'Worldline',
+        description: 'Navigate 3D worlds through time, branch futures, and create visual concepts — with WorldGen procedural rendering as the guaranteed offline substrate.',
         theme_color: '#060a14',
         background_color: '#060a14',
         display: 'standalone',

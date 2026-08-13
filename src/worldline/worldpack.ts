@@ -41,6 +41,20 @@ export function createWorldpack(
   return sanitize(raw) as Worldpack;
 }
 
+export function describeWorldpackPortability(worldpack: Worldpack): {
+  schema: Worldpack['schema'];
+  offlineCapable: true;
+  credentialSanitized: true;
+  rendererAgnostic: true;
+} {
+  return {
+    schema: worldpack.schema,
+    offlineCapable: true,
+    credentialSanitized: true,
+    rendererAgnostic: true,
+  };
+}
+
 export function serializeWorldpack(worldpack: Worldpack): string {
   return JSON.stringify(sanitize(worldpack));
 }

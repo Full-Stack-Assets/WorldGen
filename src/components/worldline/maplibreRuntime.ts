@@ -24,6 +24,11 @@ export type MapLibreMap = {
   setProjection?: (projection: { type: string } | string) => void;
   setFog?: (fog: Record<string, unknown>) => void;
   setPaintProperty?: (layerId: string, property: string, value: unknown) => void;
+  getCenter?: () => { lng: number; lat: number };
+  getZoom?: () => number;
+  getPitch?: () => number;
+  getBearing?: () => number;
+  queryRenderedFeatures?: (point: unknown, options?: unknown) => unknown[];
 };
 
 export type MapLibreNamespace = {

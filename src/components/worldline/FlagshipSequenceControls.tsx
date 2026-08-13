@@ -12,6 +12,7 @@ export interface FlagshipSequenceControlsProps {
   onExit: () => void;
   onExport: () => void;
   onSelectStage: (index: number) => void;
+  compact?: boolean;
 }
 
 function stageControlLabel(stage: FlagshipStage): string {
@@ -31,12 +32,13 @@ export function FlagshipSequenceControls({
   onExit,
   onExport,
   onSelectStage,
+  compact = false,
 }: FlagshipSequenceControlsProps) {
   const activeStage = stages[activeStageIndex] ?? stages[0];
   const progress = stages.length > 1 ? activeStageIndex / (stages.length - 1) : 0;
 
   return (
-    <section className="wl-flagship-ui" aria-label="WorldGen flagship cinematic sequence">
+    <section className={`wl-flagship-ui ${compact ? 'wl-flagship-compact' : ''}`} aria-label="WorldGen flagship cinematic sequence">
       <div className="wl-flagship-letterbox" aria-hidden="true" />
 
       <div className="wl-flagship-stage" aria-live="polite">

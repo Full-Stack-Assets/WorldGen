@@ -1,5 +1,6 @@
 import type { WorldProject } from '../../worldline/studioProjects';
 import type { WorldlineState } from '../../worldline/types';
+import { FidelityBadge } from './FidelityBadge';
 
 export function WorldlineHUD({ state, project }: { state: WorldlineState; project?: WorldProject }) {
   const branch = state.branches[state.activeBranchId];
@@ -18,7 +19,7 @@ export function WorldlineHUD({ state, project }: { state: WorldlineState; projec
         <span>{state.selectedYear}</span>
         <span>{branch?.label ?? 'Baseline'}</span>
         <span className="wl-badge">{state.activeWorld.epistemicClass}</span>
-        <span className="wl-badge">{state.activeWorld.fidelity}</span>
+        <FidelityBadge fidelity={state.activeWorld.fidelity} />
         <span className="wl-provider">{state.activeWorld.provider}</span>
       </div>
     </div>

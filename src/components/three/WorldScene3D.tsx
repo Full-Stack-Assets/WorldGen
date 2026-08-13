@@ -98,10 +98,20 @@ export function WorldScene3D({ world, selectedX, selectedY, timeOfDay, weather, 
   return <div className="world-scene-3d">
     <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 70, 90], fov: 45, near: 0.5, far: 500 }} gl={{ antialias: true, toneMappingExposure: 1.15, preserveDrawingBuffer: true }}>
       <Suspense fallback={null}>
-        {world && <SceneContent world={world} selectedX={selectedX} selectedY={selectedY} timeOfDay={timeOfDay} weather={weather} onSelectRegion={onSelectRegion} temporalSnapshots={activeTimeMode === 'PARALLAX' ? temporalSnapshots : []} showWorldlineTrail={showWorldlineTrail} />}
+        {world && <SceneContent world={world} selectedX={selectedX} selectedY={selectedY} timeOfDay={timeOfDay} weather={weather} onSelectRegion={onSelectRegion} temporalSnapshots={activeTimeMode === 'PARALLAX' || activeTimeMode === 'VOLUME' ? temporalSnapshots : []} showWorldlineTrail={showWorldlineTrail} />}
       </Suspense>
     </Canvas>
     {!world && <div className="scene-loading"><div className="scene-loading-ring" /><p>Generating world...</p></div>}
-    <div className="scene-hud-hint">Drag to orbit · Scroll to zoom · Click terrain to explore · {activeTimeMode === 'PARALLAX' ? 'Temporal Parallax active' : 'Worldline trail active'}</div>
+    <div className="scene-hud-hint">
+      Drag to orbit · Scroll to zoom · Click terrain to explore · {
+        activeTimeMode === 'PARALLAX'
+          ? 'Temporal Parallax active'
+          : activeTimeMode === 'VOLUME'
+            ? 'Time Volume · past committed, future speculative'
+            : activeTimeMode === 'PLAYBACK'
+              ? 'Playback of one worldline'
+              : 'Worldline trail active'
+      }
+    </div>
   </div>;
 }

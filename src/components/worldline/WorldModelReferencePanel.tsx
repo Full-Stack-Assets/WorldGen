@@ -1,4 +1,4 @@
-import { WORLD_MODEL_EVALUATION_DIMENSIONS, WORLD_MODEL_REFERENCES } from '../../worldline/worldModelRegistry';
+import { WORLD_MODEL_EVALUATION_DIMENSIONS, WORLD_MODEL_REFERENCES, createWorldModelEvaluationReceipt, scoreFromReceipt } from '../../worldline/worldModelRegistry';
 
 function label(value: string): string {
   return value.replaceAll('_', ' ');
@@ -30,6 +30,12 @@ export function WorldModelReferencePanel() {
         {WORLD_MODEL_EVALUATION_DIMENSIONS.map((dimension) => <span key={dimension}>{label(dimension)}</span>)}
       </div>
       <p className="wl-help">Evaluation readiness is not benchmark success. Scores remain absent until a real adapter run produces an executed receipt with evidence.</p>
+      <p className="wl-help">Reference receipt score: {scoreFromReceipt(createWorldModelEvaluationReceipt({
+        modelId: 'genie-3',
+        evaluatorId: 'worldline-reference-contract',
+        executed: false,
+        evidence: [],
+      })) ?? 'none — not executed'}.</p>
     </section>
   );
 }

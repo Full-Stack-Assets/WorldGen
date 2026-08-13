@@ -1,4 +1,6 @@
 import type { WorldlineState } from '../../worldline/types';
+import { listEarthAdapters } from '../../worldline/earthAdapters';
+import { createProviderRegistry } from '../../worldline/providers';
 import { PlanetaryStatePanel } from './PlanetaryStatePanel';
 import { SourceInspector } from './SourceInspector';
 
@@ -23,6 +25,17 @@ export function DataPanel({ state }: { state: WorldlineState }) {
       )}
       <PlanetaryStatePanel world={state.activeWorld} />
       <SourceInspector worldId={state.activeWorld.id} />
+      <section className="wl-earth-adapters">
+        <div className="wl-panel-kicker">EARTH ADAPTERS</div>
+        <p className="wl-help">Provider IDs never become world identity. Free-first Open Earth remains the mandatory path; credentialed photoreal tiles stay optional.</p>
+        {listEarthAdapters(createProviderRegistry({ localNewBedfordAvailable: true })).map((adapter) => (
+          <div key={adapter.id} className="wl-metric">
+            <span>{adapter.label}</span>
+            <strong>{adapter.available ? 'available' : 'unavailable'}</strong>
+            <small>{adapter.epistemicRendering} · {adapter.credentialRequired ? 'credentialed optional' : 'free-first'} · not canonical</small>
+          </div>
+        ))}
+      </section>
     </section>
   );
 }

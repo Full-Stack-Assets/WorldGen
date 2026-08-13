@@ -1,4 +1,5 @@
 import type { WorldLore } from '../types/world';
+import { downloadWorldBible } from '../lib/loreBible';
 
 interface WorldChronicleProps {
   lore: WorldLore | null;
@@ -65,6 +66,9 @@ export function WorldChronicle({ lore, loading, onGenerate }: WorldChronicleProp
 
       <button className="btn btn-ghost btn-sm" type="button" onClick={onGenerate} disabled={loading}>
         {loading ? 'Regenerating...' : 'Regenerate Chronicle'}
+      </button>
+      <button className="btn btn-ghost btn-sm" type="button" onClick={() => downloadWorldBible(lore)}>
+        Export world bible
       </button>
     </div>
   );
