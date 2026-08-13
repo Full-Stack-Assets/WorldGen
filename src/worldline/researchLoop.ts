@@ -1,4 +1,6 @@
+import { createImprovementMemory, recordCandidateEvaluation, type ImprovementMemory } from './improvementMemory';
 import { RECURSIVE_STAGES, type RecursiveStage } from './recursive';
+import { compressSkillPatches } from './skillCompression';
 
 export type ResearchCandidateKind =
   | 'LOW_RISK_RENDERING'
@@ -10,6 +12,33 @@ export type ResearchCandidateKind =
   | 'POLICY';
 
 export type ResearchCandidateStatus = 'PROPOSED' | 'REJECTED' | 'VERIFIED' | 'AUTO_PROMOTABLE' | 'REQUIRES_APPROVAL' | 'BLOCKED';
+
+export const RESEARCH_SKILL_COMPRESSION = compressSkillPatches([
+  {
+    id: 'source-reconciliation',
+    trigger: 'new source conflicts with accepted state',
+    workflow: ['freeze evaluator', 'generate candidates', 'independent verification', 'write immutable receipt'],
+    toolRequirements: ['provenance-store', 'independent-verifier'],
+    obligations: ['preserve prior observation', 'emit reality wake'],
+    outputFields: ['evaluationContract', 'verifierReceipt', 'promotionReceipt'],
+  },
+  {
+    id: 'world-model-evaluation',
+    trigger: 'world model adapter produces candidate output',
+    workflow: ['freeze evaluator', 'generate candidates', 'independent verification', 'write immutable receipt'],
+    toolRequirements: ['benchmark-adapter', 'independent-verifier'],
+    obligations: ['do not invent benchmark success', 'preserve epistemic class'],
+    outputFields: ['evaluationContract', 'verifierReceipt', 'promotionReceipt'],
+  },
+  {
+    id: 'restricted-source',
+    trigger: 'restricted source enters research intake',
+    workflow: ['quarantine source'],
+    toolRequirements: ['policy-gate'],
+    obligations: ['never enter autonomous training loop'],
+    outputFields: ['decisionReceipt'],
+  },
+]);
 
 export interface FrozenEvaluationContract {
   id: string;
@@ -71,6 +100,7 @@ export interface ResearchCycle {
   verifier: ResearchVerifierReceipt;
   verifications: ResearchVerifierReceipt[];
   promotion: ResearchPromotion;
+  improvementMemory: ImprovementMemory;
   realityWake: RealityWakeRecord;
   realityWakeMessage: string;
   lineage: string[];
@@ -82,6 +112,10 @@ export interface ReopenedResearchCycle extends ResearchCycle {
 
 function loss(candidate: number, incoming: number): number {
   return Math.abs(candidate - incoming);
+}
+
+function scoreFromLoss(value: number): number {
+  return Number((1 / (1 + Math.max(0, value))).toFixed(6));
 }
 
 function verify(
@@ -141,6 +175,26 @@ function createRealityWake(input: {
   };
 }
 
+function buildImprovementMemory(input: {
+  previousValue: number;
+  incomingValue: number;
+  observationId: string;
+  evaluationContractId: string;
+  selected?: ResearchCandidate;
+}): ImprovementMemory {
+  const initial = createImprovementMemory({
+    championId: `accepted-source-${input.previousValue}`,
+    championScore: scoreFromLoss(loss(input.previousValue, input.incomingValue)),
+  });
+  if (!input.selected) return initial;
+  return recordCandidateEvaluation(initial, {
+    candidateId: input.selected.id,
+    score: scoreFromLoss(input.selected.loss),
+    reversible: input.selected.reversible,
+    replayExamples: [input.observationId, input.evaluationContractId],
+  });
+}
+
 export function runDataUpdateCycle(input: {
   previousValue: number;
   incomingValue: number;
@@ -177,6 +231,12 @@ export function runDataUpdateCycle(input: {
       verifier,
       verifications: [verifier],
       promotion: { candidateId: null, status: 'NO_PROMOTION', reason: 'No reconciliation candidate required.' },
+      improvementMemory: buildImprovementMemory({
+        previousValue: input.previousValue,
+        incomingValue: input.incomingValue,
+        observationId,
+        evaluationContractId: evaluationContract.id,
+      }),
       realityWake,
       realityWakeMessage: realityWake.message,
       lineage: [observationId, evaluationContract.id, realityWake.id],
@@ -239,6 +299,13 @@ export function runDataUpdateCycle(input: {
     ? verifications.find((receipt) => receipt.candidateId === selected.id) ?? verifications[0]
     : verifications[0];
   const promotion = selected ? decide(selected, verifier) : { candidateId: null, status: 'NO_PROMOTION' as const, reason: 'All candidates failed frozen verification.' };
+  const improvementMemory = buildImprovementMemory({
+    previousValue: input.previousValue,
+    incomingValue: input.incomingValue,
+    observationId,
+    evaluationContractId: evaluationContract.id,
+    selected,
+  });
   const realityWake = createRealityWake({
     previousValue: input.previousValue,
     incomingValue: input.incomingValue,
@@ -256,9 +323,10 @@ export function runDataUpdateCycle(input: {
     verifier,
     verifications,
     promotion,
+    improvementMemory,
     realityWake,
     realityWakeMessage: realityWake.message,
-    lineage: [observationId, evaluationContract.id, ...evaluated.map((candidate) => candidate.id), verifier.verifierId, realityWake.id],
+    lineage: [observationId, evaluationContract.id, ...evaluated.map((candidate) => candidate.id), verifier.verifierId, improvementMemory.championId, realityWake.id],
   };
 }
 
