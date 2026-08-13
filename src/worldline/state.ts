@@ -14,6 +14,10 @@ export function createInitialWorldlineState(): WorldlineState {
   };
 }
 
+export function createFlagshipWorldlineState(): WorldlineState {
+  return selectWorld(createInitialWorldlineState(), 'new-bedford-001');
+}
+
 export function commitSnapshot(state: WorldlineState, snapshot: WorldSnapshot): WorldlineState {
   const branch = state.branches[snapshot.branchId];
   if (!branch) throw new Error(`Unknown branch ${snapshot.branchId}`);
