@@ -13,9 +13,7 @@ export const FORGE_LAYER_IDS = [
   'worldgen-forge-harbor-glow',
 ] as const;
 
-export type ForgeLayerId = (typeof FORGE_LAYER_IDS)[number];
-
-export interface ForgeScenePaintInput {
+export interface ApplyForgeSceneInput {
   variantId: ForgeVariantId;
   transformation: number;
   ghostOpacity: number;
@@ -24,67 +22,67 @@ export interface ForgeScenePaintInput {
   selected: boolean;
 }
 
-function paint(map: MapLibreMap, layerId: string, property: string, value: unknown): void {
+function setPaint(
+  map: MapLibreMap,
+  layerId: string,
+  property: string,
+  value: unknown,
+): void {
+  if (!map.getLayer(layerId)) return;
   map.setPaintProperty?.(layerId, property, value);
 }
 
-function emptyCollection() {
-  return { type: 'FeatureCollection', features: [] as unknown[] };
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 }
 
 export function addForgeLayers(map: MapLibreMap): void {
   if (!map.getSource(FORGE_SOURCE_ID)) {
     map.addSource(FORGE_SOURCE_ID, {
       type: 'geojson',
-      data: emptyCollection(),
+      data: createForgeGeometry('lumen-quay', 0),
     });
   }
 
-  if (!map.getLayer('worldgen-forge-parcel-surface')) {
-    map.addLayer({
-      id: 'worldgen-forge-parcel-surface',
+  const layers: unknown[] = [
+    {
+      id: FORGE_LAYER_IDS[0],
       type: 'fill',
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-surface'],
       paint: {
-        'fill-color': '#63DFFF',
-        'fill-opacity': 0.18,
+        'fill-color': ['coalesce', ['get', 'surfaceColor'], '#111D36'],
+        'fill-opacity': 0,
       },
-    });
-  }
-
-  if (!map.getLayer('worldgen-forge-parcel-line')) {
-    map.addLayer({
-      id: 'worldgen-forge-parcel-line',
+    },
+    {
+      id: FORGE_LAYER_IDS[1],
       type: 'line',
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-parcel'],
       paint: {
-        'line-color': '#63DFFF',
-        'line-width': 2.5,
-        'line-opacity': 0.9,
+        'line-color': ['coalesce', ['get', 'accentColor'], '#9B7CFF'],
+        'line-width': 2,
+        'line-opacity': 0,
+        'line-blur': 0.8,
       },
-    });
-  }
-
-  if (!map.getLayer('worldgen-forge-buildings')) {
-    map.addLayer({
-      id: 'worldgen-forge-buildings',
+    },
+    {
+      id: FORGE_LAYER_IDS[2],
       type: 'fill-extrusion',
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-building'],
+      minzoom: 13,
       paint: {
-        'fill-extrusion-color': '#9BB6D8',
+        'fill-extrusion-color': ['coalesce', ['get', 'structureColor'], '#9BB6D8'],
         'fill-extrusion-height': ['coalesce', ['get', 'height'], 0],
         'fill-extrusion-base': ['coalesce', ['get', 'base'], 0],
-        'fill-extrusion-opacity': 0.72,
+        'fill-extrusion-opacity': 0,
+        'fill-extrusion-vertical-gradient': true,
       },
-    });
-  }
-
-  if (!map.getLayer('worldgen-forge-public-realm')) {
-    map.addLayer({
-      id: 'worldgen-forge-public-realm',
+    },
+    {
+      id: FORGE_LAYER_IDS[3],
       type: 'line',
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-public-realm'],
@@ -103,70 +101,110 @@ export function addForgeLayers(map: MapLibreMap): void {
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-vegetation'],
       paint: {
-        'circle-color': '#5FE3B1',
         'circle-radius': ['coalesce', ['get', 'radius'], 4],
-        'circle-opacity': 0.85,
+        'circle-color': ['coalesce', ['get', 'vegetationColor'], '#5FE3B1'],
+        'circle-stroke-color': '#E9FFF8',
+        'circle-stroke-width': 1.1,
+        'circle-opacity': 0,
+        'circle-stroke-opacity': 0,
+        'circle-blur': 0.15,
       },
-    });
-  }
-
-  if (!map.getLayer('worldgen-forge-harbor-glow')) {
-    map.addLayer({
-      id: 'worldgen-forge-harbor-glow',
+    },
+    {
+      id: FORGE_LAYER_IDS[5],
       type: 'circle',
       source: FORGE_SOURCE_ID,
       filter: ['==', ['get', 'kind'], 'forge-harbor-glow'],
       paint: {
-        'circle-color': '#63DFFF',
-        'circle-radius': 10,
-        'circle-opacity': 0.35,
-        'circle-blur': 0.6,
+        'circle-radius': ['coalesce', ['get', 'radius'], 10],
+        'circle-color': ['coalesce', ['get', 'glowColor'], '#63DFFF'],
+        'circle-opacity': 0,
+        'circle-blur': 0.72,
       },
-    });
+    },
+  ];
+
+  for (const layer of layers) {
+    const id = (layer as { id: string }).id;
+    if (!map.getLayer(id)) map.addLayer(layer);
   }
 }
 
-export function applyForgeScene(map: MapLibreMap, input: ForgeScenePaintInput): void {
-  addForgeLayers(map);
-  const source = map.getSource(FORGE_SOURCE_ID) as { setData?: (data: unknown) => void } | undefined;
-  const geometry = createForgeGeometry(input.variantId, input.transformation);
-  source?.setData?.(geometry);
-
-  const variant = forgeVariant(input.variantId);
-  const visible = input.visible;
-  const transformed = Math.max(0, Math.min(1, input.transformation));
-  const ghostFactor = input.ghostVisible ? input.ghostOpacity : 1;
-  const buildingOpacity = visible && transformed > 0 ? 0.55 + ghostFactor * 0.35 : 0;
-  const lineOpacity = visible && transformed > 0 ? 0.55 + ghostFactor * 0.3 : 0;
-  const vegetationOpacity = visible && transformed > 0 ? 0.7 * ghostFactor : 0;
-  const glowOpacity = visible ? 0.2 + variant.glow * 0.25 * transformed : 0;
-
-  paint(map, 'worldgen-forge-buildings', 'fill-extrusion-color', variant.palette.structure);
-  paint(map, 'worldgen-forge-buildings', 'fill-extrusion-opacity', buildingOpacity);
-  paint(map, 'worldgen-forge-public-realm', 'line-color', variant.palette.accent);
-  paint(map, 'worldgen-forge-public-realm', 'line-opacity', lineOpacity);
-  paint(map, 'worldgen-forge-vegetation', 'circle-color', variant.palette.vegetation);
-  paint(map, 'worldgen-forge-vegetation', 'circle-opacity', vegetationOpacity);
-  paint(map, 'worldgen-forge-harbor-glow', 'circle-color', variant.palette.glow);
-  paint(map, 'worldgen-forge-harbor-glow', 'circle-opacity', glowOpacity);
-  paint(map, 'worldgen-forge-parcel-surface', 'fill-color', variant.palette.surface);
-  paint(map, 'worldgen-forge-parcel-surface', 'fill-opacity', visible ? 0.16 : 0);
-  paint(map, 'worldgen-forge-parcel-line', 'line-color', variant.palette.accent);
-  paint(map, 'worldgen-forge-parcel-line', 'line-opacity', visible ? 0.95 : 0);
-  paint(map, 'worldgen-forge-parcel-line', 'line-width', input.selected ? 5 : 2.5);
-}
-
 export function setForgeVisibility(map: MapLibreMap, visible: boolean): void {
-  addForgeLayers(map);
-  paint(map, 'worldgen-forge-parcel-surface', 'fill-opacity', visible ? 0.16 : 0);
-  paint(map, 'worldgen-forge-parcel-line', 'line-opacity', visible ? 0.95 : 0);
-  paint(map, 'worldgen-forge-buildings', 'fill-extrusion-opacity', visible ? 0.72 : 0);
-  paint(map, 'worldgen-forge-public-realm', 'line-opacity', visible ? 0.8 : 0);
-  paint(map, 'worldgen-forge-vegetation', 'circle-opacity', visible ? 0.85 : 0);
-  paint(map, 'worldgen-forge-harbor-glow', 'circle-opacity', visible ? 0.35 : 0);
+  setPaint(map, FORGE_LAYER_IDS[0], 'fill-opacity', visible ? 0.16 : 0);
+  setPaint(map, FORGE_LAYER_IDS[1], 'line-opacity', visible ? 0.86 : 0);
+  setPaint(map, FORGE_LAYER_IDS[2], 'fill-extrusion-opacity', visible ? 0.72 : 0);
+  setPaint(map, FORGE_LAYER_IDS[3], 'line-opacity', visible ? 0.78 : 0);
+  setPaint(map, FORGE_LAYER_IDS[4], 'circle-opacity', visible ? 0.84 : 0);
+  setPaint(map, FORGE_LAYER_IDS[4], 'circle-stroke-opacity', visible ? 0.64 : 0);
+  setPaint(map, FORGE_LAYER_IDS[5], 'circle-opacity', visible ? 0.78 : 0);
 }
 
 export function setForgeSelection(map: MapLibreMap, selected: boolean): void {
+  setPaint(map, FORGE_LAYER_IDS[1], 'line-width', selected ? 5 : 2);
+  setPaint(map, FORGE_LAYER_IDS[1], 'line-blur', selected ? 1.8 : 0.8);
+}
+
+export function applyForgeScene(
+  map: MapLibreMap,
+  input: ApplyForgeSceneInput,
+): void {
   addForgeLayers(map);
-  paint(map, 'worldgen-forge-parcel-line', 'line-width', selected ? 5 : 2.5);
+  const transformation = clamp01(input.transformation);
+  const ghost = input.ghostVisible ? clamp01(input.ghostOpacity) : 1;
+  const variant = forgeVariant(input.variantId);
+  const source = map.getSource(FORGE_SOURCE_ID) as GeoJSONSourceLike | undefined;
+  source?.setData(createForgeGeometry(input.variantId, transformation));
+
+  setPaint(map, FORGE_LAYER_IDS[0], 'fill-color', variant.palette.surface);
+  setPaint(map, FORGE_LAYER_IDS[1], 'line-color', variant.palette.accent);
+  setPaint(map, FORGE_LAYER_IDS[2], 'fill-extrusion-color', variant.palette.structure);
+  setPaint(map, FORGE_LAYER_IDS[3], 'line-color', variant.palette.accent);
+  setPaint(map, FORGE_LAYER_IDS[4], 'circle-color', variant.palette.vegetation);
+  setPaint(map, FORGE_LAYER_IDS[5], 'circle-color', variant.palette.glow);
+
+  const visible = input.visible;
+  setForgeSelection(map, input.selected);
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[0],
+    'fill-opacity',
+    visible ? (input.selected ? 0.22 : 0.12) * ghost : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[1],
+    'line-opacity',
+    visible ? (input.selected ? 1 : 0.76) : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[2],
+    'fill-extrusion-opacity',
+    visible && transformation > 0 ? (0.48 + transformation * 0.42) * ghost : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[3],
+    'line-opacity',
+    visible && transformation > 0 ? (0.45 + transformation * 0.45) * ghost : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[4],
+    'circle-opacity',
+    visible && transformation > 0 ? (0.4 + transformation * 0.48) * ghost : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[4],
+    'circle-stroke-opacity',
+    visible && transformation > 0 ? 0.62 * ghost : 0,
+  );
+  setPaint(
+    map,
+    FORGE_LAYER_IDS[5],
+    'circle-opacity',
+    visible && transformation > 0 ? variant.glow * transformation * ghost : 0,
+  );
 }

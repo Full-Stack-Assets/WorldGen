@@ -1,15 +1,21 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createInitialForgeState } from '../forgeModel';
+import { describe, expect, it } from 'vitest';
 import {
   FORGE_SCENE_FILENAME,
   FORGE_STILL_FILENAME,
-  downloadForgeScenePackage,
+  createForgeSceneDownload,
   downloadForgeStill,
-  readForgeCamera,
 } from '../forgeExports';
+import { createInitialForgeState } from '../forgeModel';
+
+const camera = {
+  center: [-70.9217, 41.6349] as const,
+  zoom: 17.4,
+  pitch: 72,
+  bearing: -40,
+};
 
 describe('FORGE exports', () => {
-  it('uses locked still and scene filenames', () => {
+  it('uses stable v5 filenames', () => {
     expect(FORGE_STILL_FILENAME).toBe('worldgen-forge-new-bedford.png');
     expect(FORGE_SCENE_FILENAME).toBe('worldgen-forge-new-bedford.scene.json');
   });

@@ -1,15 +1,15 @@
+import type { ChangeEvent } from 'react';
 import {
-  DEFAULT_FORGE_PROMPT,
   FORGE_PROMPT_SEEDS,
   FORGE_VARIANTS,
+  forgeVariant,
   type ForgeState,
   type ForgeVariantId,
 } from './forgeModel';
+import './forge.css';
 
 export interface ForgeControlsProps {
   state: ForgeState;
-  compact?: boolean;
-  mapReady?: boolean;
   onOpen: () => void;
   onClose: () => void;
   onSelectParcel: () => void;
@@ -23,10 +23,125 @@ export interface ForgeControlsProps {
   onExportScene: () => void;
 }
 
+function ConceptBadge() {
+  return (
+    <span className="forge-concept-badge">
+      <i aria-hidden="true" />
+      VISUAL CONCEPT
+    </span>
+  );
+}
+
+function VariantRibbon({
+  state,
+  onSelectVariant,
+}: Pick<ForgeControlsProps, 'state' | 'onSelectVariant'>) {
+  return (
+    <div className="forge-variant-ribbon" aria-label="FORGE visual directions">
+      {FORGE_VARIANTS.map((variant) => {
+        const selected = state.variantId === variant.id;
+        return (
+          <button
+            key={variant.id}
+            type="button"
+            className={selected ? 'forge-variant active' : 'forge-variant'}
+            aria-pressed={selected}
+            onClick={() => onSelectVariant(variant.id)}
+          >
+            <span
+              className="forge-variant-swatch"
+              style={{
+                background: `linear-gradient(135deg, ${variant.palette.surface}, ${variant.palette.accent})`,
+              }}
+              aria-hidden="true"
+            />
+            <span className="forge-variant-copy">
+              <strong>{variant.name}</strong>
+              <small>{variant.maxHeight}m · {variant.assetReuseCount} reused assets</small>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function EditingTools({
+  state,
+  onToggleGhost,
+  onTransformationChange,
+  onDirect,
+  onExportStill,
+  onExportScene,
+}: Pick<
+  ForgeControlsProps,
+  | 'state'
+  | 'onToggleGhost'
+  | 'onTransformationChange'
+  | 'onDirect'
+  | 'onExportStill'
+  | 'onExportScene'
+>) {
+  const variant = forgeVariant(state.variantId);
+  const percent = Math.round(state.transformation * 100);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onTransformationChange(Number(event.target.value));
+  };
+
+  return (
+    <div className="forge-editing-tools">
+      <div className="forge-reality-row">
+        <label htmlFor="forge-reality-transform">
+          <span>Reality transformation</span>
+          <strong>{percent}%</strong>
+        </label>
+        <input
+          id="forge-reality-transform"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={state.transformation}
+          onChange={handleChange}
+          aria-valuetext={`${percent}% transformed`}
+        />
+        <div className="forge-reality-labels" aria-hidden="true">
+          <span>Present</span>
+          <span>{variant.name}</span>
+        </div>
+      </div>
+
+      <div className="forge-tool-row">
+        <button
+          type="button"
+          className={state.ghostVisible ? 'forge-chip active' : 'forge-chip'}
+          aria-pressed={state.ghostVisible}
+          onClick={onToggleGhost}
+        >
+          Ghost view
+        </button>
+        <button
+          type="button"
+          className="forge-director-button"
+          onClick={onDirect}
+          disabled={state.mode === 'directing'}
+        >
+          <span aria-hidden="true">◆</span>
+          {state.mode === 'directing' ? 'Directing…' : 'Director reveal'}
+        </button>
+      </div>
+
+      <div className="forge-export-row" aria-label="FORGE exports">
+        <button type="button" onClick={onExportStill}>Export still</button>
+        <button type="button" onClick={onExportScene}>Export scene package</button>
+      </div>
+    </div>
+  );
+}
+
 export function ForgeControls({
   state,
-  compact = false,
-  mapReady = true,
   onOpen,
   onClose,
   onSelectParcel,
@@ -39,100 +154,106 @@ export function ForgeControls({
   onExportStill,
   onExportScene,
 }: ForgeControlsProps) {
-  const active = state.mode !== 'closed';
-  const percent = Math.round(state.transformation * 100);
+  if (state.mode === 'closed') {
+    return (
+      <button type="button" className="forge-entry" onClick={onOpen}>
+        <span className="forge-entry-mark" aria-hidden="true">◇</span>
+        <span>
+          <strong>Enter FORGE</strong>
+          <small>Direct this world</small>
+        </span>
+      </button>
+    );
+  }
+
+  const activeVariant = forgeVariant(state.variantId);
 
   return (
-    <div className={`wl-forge ${compact ? 'compact' : ''} ${state.mode}`} data-forge-mode={state.mode}>
-      {state.mode === 'closed' && (
-        <button type="button" className="wl-forge-enter" onClick={onOpen} disabled={!mapReady}>
-          Enter FORGE
-        </button>
-      )}
+    <section className={`forge-surface forge-mode-${state.mode}`} aria-label="WorldGen FORGE">
+      <header className="forge-header">
+        <div>
+          <span className="forge-kicker">WORLDGEN FORGE · 5.0</span>
+          <strong>New Bedford Waterfront Mutation Lab</strong>
+        </div>
+        <div className="forge-header-actions">
+          <ConceptBadge />
+          <button type="button" className="forge-close" aria-label="Close FORGE" onClick={onClose}>×</button>
+        </div>
+      </header>
 
-      {active && (
-        <div className="wl-forge-dock" aria-live="polite">
-          <header className="wl-forge-dock-header">
-            <strong>WorldGen FORGE</strong>
-            <span className="wl-forge-concept">VISUAL CONCEPT</span>
-            <button type="button" className="wl-secondary" onClick={onClose}>Close</button>
-          </header>
+      <div className="forge-content" aria-live="polite">
+        {state.mode === 'selecting' && (
+          <div className="forge-select-step">
+            <span className="forge-step-number">01</span>
+            <div>
+              <h2>Select the waterfront</h2>
+              <p>The concept parcel is illuminated in the scene. Enter it to begin directing a visual future.</p>
+              <button type="button" className="forge-primary" onClick={onSelectParcel}>
+                Select waterfront parcel
+              </button>
+            </div>
+          </div>
+        )}
 
-          {state.mode === 'selecting' && (
-            <p className="wl-forge-copy">Select the New Bedford waterfront parcel to begin a visual mutation. Results stay conceptual.</p>
-          )}
-          {(state.mode === 'selecting' || !state.parcelSelected) && active && (
-            <button type="button" className="wl-forge-primary" onClick={onSelectParcel}>
-              Select waterfront parcel
-            </button>
-          )}
-
-          {(state.mode === 'prompting' || state.mode === 'comparing' || state.mode === 'editing' || state.mode === 'directing') && (
-            <label className="wl-forge-prompt">
-              <span>Visual direction</span>
-              <textarea
-                aria-label="FORGE visual direction"
-                value={state.prompt}
-                onChange={(event) => onPromptChange(event.target.value)}
-                rows={compact ? 2 : 3}
-              />
-            </label>
-          )}
-
-          {state.mode === 'prompting' && (
-            <>
-              <div className="wl-forge-seeds">
-                {FORGE_PROMPT_SEEDS.map((seed) => (
-                  <button key={seed} type="button" onClick={() => onPromptChange(seed)}>{seed}</button>
-                ))}
-              </div>
-              <button type="button" className="wl-forge-primary" onClick={onGenerate}>Generate directions</button>
-            </>
-          )}
-
-          {(state.mode === 'comparing' || state.mode === 'editing' || state.mode === 'directing') && (
-            <div className="wl-forge-ribbon" role="listbox" aria-label="FORGE directions">
-              {FORGE_VARIANTS.map((variant) => (
-                <button
-                  key={variant.id}
-                  type="button"
-                  className={state.variantId === variant.id ? 'active' : ''}
-                  onClick={() => onSelectVariant(variant.id)}
-                >
-                  {variant.name}
+        {state.mode === 'prompting' && (
+          <div className="forge-prompt-step">
+            <label htmlFor="forge-visual-direction">Visual direction</label>
+            <textarea
+              id="forge-visual-direction"
+              value={state.prompt}
+              rows={3}
+              onChange={(event) => onPromptChange(event.target.value)}
+            />
+            <div className="forge-seed-row" aria-label="Visual direction presets">
+              {FORGE_PROMPT_SEEDS.map((seed, index) => (
+                <button key={seed} type="button" onClick={() => onPromptChange(seed)}>
+                  {['Civic harbor', 'Tidal industry', 'Luminous future'][index]}
                 </button>
               ))}
             </div>
-          )}
+            <button type="button" className="forge-primary" onClick={onGenerate} disabled={!state.prompt.trim()}>
+              Generate directions
+            </button>
+          </div>
+        )}
 
-          {(state.mode === 'editing' || state.mode === 'directing') && (
-            <label className="wl-forge-scrubber">
-              <span>Reality transformation {percent}%</span>
-              <input
-                aria-label="Reality transformation"
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={state.transformation}
-                onChange={(event) => onTransformationChange(Number(event.target.value))}
-              />
-            </label>
-          )}
-
-          {active && (
-            <div className="wl-forge-actions">
-              <button type="button" className={state.ghostVisible ? 'active' : ''} onClick={onToggleGhost}>Ghost preview</button>
-              <button type="button" aria-label="Director" onClick={onDirect}>Director</button>
-              <button type="button" aria-label="Export still" onClick={onExportStill}>Export still</button>
-              <button type="button" aria-label="Export scene" onClick={onExportScene}>Export scene</button>
+        {state.mode === 'comparing' && (
+          <div className="forge-compare-step">
+            <div className="forge-section-heading">
+              <span>Three visual futures</span>
+              <small>Choose a direction to place it in the waterfront.</small>
             </div>
-          )}
+            <VariantRibbon state={state} onSelectVariant={onSelectVariant} />
+          </div>
+        )}
 
-          {state.status && <p className="wl-forge-status">{state.status}</p>}
-          <p className="wl-forge-disclosure">Generated visual concepts — not approved or constructed projects. Default prompt: {DEFAULT_FORGE_PROMPT.slice(0, 48)}…</p>
-        </div>
-      )}
-    </div>
+        {(state.mode === 'editing' || state.mode === 'directing') && (
+          <div className="forge-edit-step">
+            <div className="forge-active-direction">
+              <span
+                className="forge-active-swatch"
+                style={{ background: activeVariant.palette.accent }}
+                aria-hidden="true"
+              />
+              <div>
+                <strong>{activeVariant.name}</strong>
+                <p>{activeVariant.thesis}</p>
+              </div>
+            </div>
+            <VariantRibbon state={state} onSelectVariant={onSelectVariant} />
+            <EditingTools
+              state={state}
+              onToggleGhost={onToggleGhost}
+              onTransformationChange={onTransformationChange}
+              onDirect={onDirect}
+              onExportStill={onExportStill}
+              onExportScene={onExportScene}
+            />
+          </div>
+        )}
+      </div>
+
+      {state.status && <div className="forge-status" role="status">{state.status}</div>}
+    </section>
   );
 }

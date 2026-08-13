@@ -21,6 +21,8 @@ export function FlagshipControlsLayer({
   journey: CinematicJourneyState;
   forgeOpen?: boolean;
 }) {
+  if (forgeOpen) return null;
+
   return (
     <FlagshipSequenceControls
       stages={FLAGSHIP_STAGES}

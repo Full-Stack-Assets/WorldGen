@@ -5,7 +5,7 @@ import { FlagshipControlsLayer } from './FlagshipControlsLayer';
 import { ForgeControls } from './ForgeControls';
 import type { MapLibreMap } from './maplibreRuntime';
 import { useFlagshipFlight as useCinematicJourney } from './useFlagshipFlight';
-import { useForgeController } from './useForgeController';
+import { useForgeController } from './useForgeControllerV5';
 import { useMountedEarthMap } from './useMountedEarthMap';
 import './flagship-sequence.css';
 import './forge.css';
@@ -57,6 +57,7 @@ export function OpenEarthView({
     compact,
     onCinematicStateChange,
   );
+  const forge = useForgeController(mapRef, journey, reducedMotion, compact);
   const startAutoplay = useCallback(() => journey.play(0), [journey.play]);
   const forge = useForgeController(mapRef, journey, reducedMotion);
   const handleReady = useCallback(() => {
@@ -86,11 +87,12 @@ export function OpenEarthView({
         selectedYear={selectedYear}
         timeMode={timeMode}
       />
-      <FlagshipControlsLayer journey={journey} forgeOpen={forge.state.mode !== 'closed'} />
+      <FlagshipControlsLayer
+        journey={journey}
+        forgeOpen={forge.state.mode !== 'closed'}
+      />
       <ForgeControls
         state={forge.state}
-        compact={compact}
-        mapReady={mapReady}
         onOpen={forge.open}
         onClose={forge.close}
         onSelectParcel={forge.selectParcel}
@@ -100,7 +102,7 @@ export function OpenEarthView({
         onToggleGhost={forge.toggleGhost}
         onTransformationChange={forge.setTransformation}
         onDirect={forge.direct}
-        onExportStill={() => void forge.exportStill()}
+        onExportStill={forge.exportStill}
         onExportScene={forge.exportScene}
       />
     </div>

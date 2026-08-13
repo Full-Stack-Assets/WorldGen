@@ -90,4 +90,29 @@ describe('FORGE MapLibre layers', () => {
       'worldgen-forge-parcel-line', 'line-width', 5,
     ]);
   });
+
+  it('keeps parcel overlays hidden after FORGE closes', () => {
+    const fake = new FakeMap();
+    addForgeLayers(asMap(fake));
+    applyForgeScene(asMap(fake), {
+      variantId: 'lumen-quay', transformation: 1, ghostOpacity: 0.46,
+      ghostVisible: true, visible: false, selected: false,
+    });
+
+    const surfaceOpacity = fake.paintCalls
+      .filter(([layer, property]) =>
+        layer === 'worldgen-forge-parcel-surface' && property === 'fill-opacity')
+      .at(-1);
+    const lineOpacity = fake.paintCalls
+      .filter(([layer, property]) =>
+        layer === 'worldgen-forge-parcel-line' && property === 'line-opacity')
+      .at(-1);
+
+    expect(surfaceOpacity).toEqual([
+      'worldgen-forge-parcel-surface', 'fill-opacity', 0,
+    ]);
+    expect(lineOpacity).toEqual([
+      'worldgen-forge-parcel-line', 'line-opacity', 0,
+    ]);
+  });
 });
