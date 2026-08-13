@@ -88,7 +88,7 @@ export function ComparePanel({
                 </div>
               ))}
             </div>
-            <p className="wl-help">Studio Experiment deltas come from deterministic scenario inputs applied to the committed baseline. They are not probability scores or calibrated forecasts.</p>
+            <p className="wl-help">Studio Experiment deltas come from deterministic scenario inputs applied to the committed baseline. Treat them as scenario geometry, not calibrated likelihoods or forecasts.</p>
           </>
         ) : (
           <p className="wl-help">Run a Studio experiment on an attached simulation world to compare a baseline with its scenario result.</p>
