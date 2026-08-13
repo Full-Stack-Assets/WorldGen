@@ -25,14 +25,16 @@ WorldGen FORGE extends the canonical `Full-Stack-Assets/WorldGen` product and th
 | Output | Path | Purpose |
 |---|---|---|
 | FORGE domain contract | `src/components/worldline/forgeModel.ts` | Modes, variants, prompts, director paths, scene-package schema |
+| Clean entry transition | `src/components/worldline/forgeStateTransitions.ts` | Resets stale concept state before a new parcel-selection workflow |
 | Variant geometry generator | `src/components/worldline/forgeGeometry.ts` | Bounded conceptual GeoJSON with continuous transformation |
 | MapLibre scene adapter | `src/components/worldline/forgeMapLayers.ts` | Six idempotent visual layers over the canonical map |
 | Spatial control system | `src/components/worldline/ForgeControls.tsx` | Select, describe, compare, ghost, scrub, direct, and export |
 | FORGE visual tokens | `src/components/worldline/forge.css` | Prompt capsule, direction ribbon, scrubber, mobile sheet, disclosure badge |
-| FORGE controller | `src/components/worldline/useForgeController.ts` | Visual workflow state, scene application, Director reveal, lifecycle coordination |
+| FORGE controller | `src/components/worldline/useForgeControllerV5.ts` | Visual workflow state, clean re-entry, scene application, Director reveal, lifecycle coordination |
 | Export contract | `src/components/worldline/forgeExports.ts` | PNG still and reusable conceptual scene package |
 | Visual Director agent | Outside Agent `a0049df1-81e7-46f7-93cb-6a00797e9eb4` | Structured three-direction visual briefs |
 | Spatial UI design file | Figma `D1Eu0jOYEqfKw8ch8XhJlO` | Editable release frames and interface tokens |
+| Independent preview | AppDeploy `worldgen-flagship-preview-t5q7or` | Live visual proof and browser-level workflow QA |
 
 ## Invariants
 
@@ -43,6 +45,7 @@ WorldGen FORGE extends the canonical `Full-Stack-Assets/WorldGen` product and th
 5. New variants reuse common geometry functions, layer IDs, interaction components, and export contracts.
 6. New outputs must be registered before another implementation recreates them.
 7. Similarity is not deletion authority. Alternatives and forks retain their provenance until reviewed.
+8. Re-entering FORGE resets stale generated geometry before parcel selection begins.
 
 ## Similarity and duplicate policy
 
@@ -57,17 +60,43 @@ Decision order:
 5. `REFACTOR_EXISTING`
 6. `CREATE_NEW` only with a written incompatibility reason
 
+The superseded `useForgeController.ts` implementation was removed after `useForgeControllerV5.ts` became canonical. No duplicate controller remains on the final branch.
+
 ## Verification evidence
 
-- Domain model: `src/components/worldline/__tests__/forgeModel.test.ts`
+### Canonical repository
+
+- Domain model and clean re-entry: `src/components/worldline/__tests__/forgeModel.test.ts`
 - Geometry: `src/components/worldline/__tests__/forgeGeometry.test.ts`
-- Map layers: `src/components/worldline/__tests__/forgeMapLayers.test.ts`
+- Map layers and close-state visibility: `src/components/worldline/__tests__/forgeMapLayers.test.ts`
 - Spatial controls: `src/components/worldline/__tests__/ForgeControls.test.tsx`
 - Exports: `src/components/worldline/__tests__/forgeExports.test.ts`
 - Canonical composition: `src/components/worldline/__tests__/OpenEarthView.test.tsx`
-- Task-level green CI: workflow run `31748778125`
-- Integrated v5 green CI: workflow run `31749353973`
-- Release review surface: PR `#23`, branch `feat/worldgen-forge-v5-continuation`
+- Final release branch: `feat/worldgen-forge-v5-final`
+- Final verified commit before this ledger update: `7ced2a2025e527eccf3cdb27d200271e6967251f`
+- Final verification workflow: `31753461090`
+- Result: provider guard, backend boundary, type-check, full test suite, and production build all passed
+
+### Independent visual preview
+
+- Live preview: `https://worldgen-flagship-preview-t5q7or.v2.appdeploy.ai/`
+- QA group: `04760b9165f51b8c`
+- Passed browser workflows: material variant switching, clean close/reopen, and scene-package download with the stable filename and visible success state
+- The long Director workflow was skipped by the external QA worker after its 300-second execution ceiling before producing a trace; it was not recorded as a runtime failure. The canonical Director path remains covered by deterministic source tests and the final production build.
+
+### Figma
+
+- File: `WorldGen Spatial UI System v5.0`
+- Key: `D1Eu0jOYEqfKw8ch8XhJlO`
+- Contents: seven desktop release states, one 375×667 mobile state, and eight reusable components/tokens
+
+### Outside Agent
+
+- Agent: `WorldGen Visual Director`
+- ID: `a0049df1-81e7-46f7-93cb-6a00797e9eb4`
+- Configured with the three-variant, reuse-first, fixed-structure, visual-only, and concept-disclosure contracts
+- Live adversarial drive produced one response containing exactly three structured directions and explicit reuse decisions
+- Publication remains blocked by the connected creator wallet’s zero-credit state; the agent is configured and verified but not represented as publicly published
 
 ## Version
 
