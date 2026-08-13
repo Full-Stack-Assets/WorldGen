@@ -14,7 +14,7 @@ describe('OpenEarthView', () => {
     expect(chooseEarthProjection(true, 'mercator')).toBe('mercator');
   });
 
-  it('renders the flagship cinematic surface without requiring the map runtime', () => {
+  it('renders one visual-first Earth surface with flagship and FORGE controls', () => {
     const html = renderToStaticMarkup(createElement(OpenEarthView, {
       selectedYear: 2026,
       timeMode: 'SLICE',
@@ -26,5 +26,8 @@ describe('OpenEarthView', () => {
     expect(html).toContain('WorldGen flagship cinematic sequence');
     expect(html).toContain('Play flagship flight');
     expect(html).toContain('Export WebM');
+    expect(html).toContain('Enter FORGE');
+    expect(html.match(/wl-open-earth-map/g)).toHaveLength(1);
+    expect(html).not.toContain('WORLD DASHBOARD');
   });
 });
