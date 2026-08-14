@@ -10,6 +10,7 @@ import './forge.css';
 
 export interface ForgeControlsProps {
   state: ForgeState;
+  mapReady?: boolean;
   onOpen: () => void;
   onClose: () => void;
   onSelectParcel: () => void;
@@ -142,6 +143,7 @@ function EditingTools({
 
 export function ForgeControls({
   state,
+  mapReady = true,
   onOpen,
   onClose,
   onSelectParcel,
@@ -156,11 +158,16 @@ export function ForgeControls({
 }: ForgeControlsProps) {
   if (state.mode === 'closed') {
     return (
-      <button type="button" className="forge-entry" onClick={onOpen}>
+      <button
+        type="button"
+        className="forge-entry"
+        onClick={onOpen}
+        disabled={!mapReady}
+      >
         <span className="forge-entry-mark" aria-hidden="true">◇</span>
         <span>
           <strong>Enter FORGE</strong>
-          <small>Direct this world</small>
+          <small>{mapReady ? 'Direct this world' : 'Waiting for Earth surface'}</small>
         </span>
       </button>
     );

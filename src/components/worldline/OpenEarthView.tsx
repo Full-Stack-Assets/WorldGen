@@ -59,7 +59,6 @@ export function OpenEarthView({
   );
   const forge = useForgeController(mapRef, journey, reducedMotion, compact);
   const startAutoplay = useCallback(() => journey.play(0), [journey.play]);
-  const forge = useForgeController(mapRef, journey, reducedMotion);
   const handleReady = useCallback(() => {
     setMapReady(true);
     onReady?.();
@@ -93,6 +92,7 @@ export function OpenEarthView({
       />
       <ForgeControls
         state={forge.state}
+        mapReady={mapReady}
         onOpen={forge.open}
         onClose={forge.close}
         onSelectParcel={forge.selectParcel}
