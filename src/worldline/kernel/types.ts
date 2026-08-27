@@ -1,4 +1,4 @@
-import type { EpistemicClass } from '../types';
+import type { BranchRecord, EpistemicClass, TimeMode, WorldRecord } from '../types';
 
 export type Sha256Digest = `sha256:${string}`;
 export type MechanismPromotionStatus = 'CANDIDATE' | 'APPROVED_EXECUTABLE' | 'RETIRED' | 'REJECTED';
@@ -9,6 +9,19 @@ export type DeterministicSeedPolicy = 'FORBIDDEN' | 'OPTIONAL' | 'REQUIRED';
 export type TransitionRiskClass = 'LOW' | 'MEDIUM' | 'HIGH';
 export type CanonicalJsonPrimitive = string | number | boolean | null;
 export type CanonicalJsonValue = CanonicalJsonPrimitive | CanonicalJsonValue[] | { [key: string]: CanonicalJsonValue };
+
+export interface CanonicalWorldState {
+  schema: 'worldline-canonical-state-v1';
+  worlds: WorldRecord[];
+  branches: Record<string, BranchRecord>;
+}
+
+export interface WorldlineSessionState {
+  activeWorldId: string;
+  activeBranchId: string;
+  selectedYear: number;
+  timeMode: TimeMode;
+}
 
 export interface FoundationModelIdentity {
   provider: string;
