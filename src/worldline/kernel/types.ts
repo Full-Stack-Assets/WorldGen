@@ -165,7 +165,7 @@ export interface InvariantResult {
 export interface TransitionReceiptCore {
   schema: 'worldline-transition-receipt-core-v1';
   baseRevisionId: string;
-  baseStateHash: Sha256Digest;
+  baseStateHash: Sha256Digest | null;
   mechanismId: string;
   mechanismHash: Sha256Digest;
   proposalId: string;

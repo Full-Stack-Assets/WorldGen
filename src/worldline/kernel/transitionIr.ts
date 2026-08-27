@@ -1,5 +1,6 @@
 import { canonicalizeToJson } from './canonicalize';
-import type { TransitionIrOperation, TransitionIrV1 } from './types';
+import { hashCanonical } from './hash';
+import type { Sha256Digest, TransitionIrOperation, TransitionIrV1, TransitionMechanismArtifact } from './types';
 
 const ALLOWED_OPERATIONS = new Set<TransitionIrOperation['op']>([
   'SET',
@@ -120,4 +121,32 @@ export function assertOperationWithinDeclaredSets(
 
 export function assertIrWithinDeclaredSets(ir: TransitionIrV1, readSet: string[], writeSet: string[]): void {
   for (const operation of ir.operations) assertOperationWithinDeclaredSets(operation, readSet, writeSet);
+}
+
+export function mechanismDefinitionPayload(
+  mechanism: Omit<TransitionMechanismArtifact, 'mechanismHash'> | TransitionMechanismArtifact,
+) {
+  return {
+    schema: mechanism.schema,
+    mechanismId: mechanism.mechanismId,
+    producerId: mechanism.producerId,
+    sourceType: mechanism.sourceType,
+    executorKind: mechanism.executorKind,
+    stateSchema: mechanism.stateSchema,
+    inputSchema: mechanism.inputSchema,
+    readSet: [...mechanism.readSet].sort(),
+    writeSet: [...mechanism.writeSet].sort(),
+    epistemicCeiling: mechanism.epistemicCeiling,
+    deterministicSeedPolicy: mechanism.deterministicSeedPolicy,
+    invariantSuiteIds: [...mechanism.invariantSuiteIds].sort(),
+    riskClass: mechanism.riskClass,
+    executionPolicy: mechanism.executionPolicy,
+    ir: mechanism.ir,
+  };
+}
+
+export function computeMechanismHash(
+  mechanism: Omit<TransitionMechanismArtifact, 'mechanismHash'> | TransitionMechanismArtifact,
+): Sha256Digest {
+  return hashCanonical(mechanismDefinitionPayload(mechanism));
 }
