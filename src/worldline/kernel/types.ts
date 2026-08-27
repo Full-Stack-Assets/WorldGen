@@ -7,6 +7,7 @@ export type MechanismSourceType = 'HUMAN_AUTHORED' | 'AGENT_GENERATED' | 'IMPORT
 export type TransitionExecutorKind = 'TRANSITION_IR_V1';
 export type DeterministicSeedPolicy = 'FORBIDDEN' | 'OPTIONAL' | 'REQUIRED';
 export type TransitionRiskClass = 'LOW' | 'MEDIUM' | 'HIGH';
+export type MechanismExecutionPolicy = 'AUTO_LOW_RISK' | 'HUMAN_EACH_EXECUTION';
 export type CanonicalJsonPrimitive = string | number | boolean | null;
 export type CanonicalJsonValue = CanonicalJsonPrimitive | CanonicalJsonValue[] | { [key: string]: CanonicalJsonValue };
 
@@ -116,6 +117,7 @@ export interface TransitionMechanismArtifact {
   deterministicSeedPolicy: DeterministicSeedPolicy;
   invariantSuiteIds: string[];
   riskClass: TransitionRiskClass;
+  executionPolicy: MechanismExecutionPolicy;
   promotionStatus: MechanismPromotionStatus;
   approvalReceiptId: string | null;
   ir: TransitionIrV1;

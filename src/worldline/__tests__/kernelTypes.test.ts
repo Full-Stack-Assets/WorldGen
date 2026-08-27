@@ -38,6 +38,7 @@ describe('Worldline causal kernel contracts', () => {
       deterministicSeedPolicy: 'REQUIRED',
       invariantSuiteIds: ['core'],
       riskClass: 'LOW',
+      executionPolicy: 'AUTO_LOW_RISK',
       promotionStatus: 'CANDIDATE',
       approvalReceiptId: null,
       ir: { version: '1', operations: [] },
