@@ -31,12 +31,22 @@ export interface ExecutionApprovalClaim {
   baseRevisionId: string;
 }
 
+export const KERNEL_VERSION_V1 = '1.0.0' as const;
+
+export interface VerifierIndependenceClaim {
+  producerId: string;
+  verifierId: string;
+  verifierConfigDigest: `sha256:${string}`;
+}
+
 export interface AdmissionDependencies {
   store: RevisionStore;
   kernelVersion: string;
   verifierId: string;
   verifierConfigDigest: `sha256:${string}`;
   verifyMechanismApproval?: (claim: MechanismApprovalClaim) => boolean;
+  verifyProducerIdentity?: (producerId: string) => boolean;
+  verifyVerifierIndependence?: (claim: VerifierIndependenceClaim) => boolean;
   verifyExecutionApproval?: (claim: ExecutionApprovalClaim) => boolean;
   replayTransition?: (before: CanonicalWorldState, mechanism: TransitionMechanismArtifact) => CanonicalWorldState;
   now?: () => string;
@@ -59,30 +69,22 @@ function decodePointer(path: string): string[] {
 const FORBIDDEN_WRITE_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
 
 function assertSafeSegments(segments: string[]): void {
-  if (segments.some((segment) => FORBIDDEN_WRITE_SEGMENTS.has(segment))) {
-    throw new Error('Unsafe JSON Pointer segment is forbidden');
-  }
+  if (segments.some((segment) => FORBIDDEN_WRITE_SEGMENTS.has(segment))) throw new Error('Unsafe JSON Pointer segment is forbidden');
 }
 
 function arrayIndex(segment: string, length: number): number {
   if (!/^(0|[1-9]\d*)$/.test(segment)) throw new Error(`Array path segment is not a canonical index: ${segment}`);
   const index = Number(segment);
-  if (!Number.isSafeInteger(index) || index < 0 || index >= length) {
-    throw new Error(`Array index out of range: ${segment}`);
-  }
+  if (!Number.isSafeInteger(index) || index < 0 || index >= length) throw new Error(`Array index out of range: ${segment}`);
   return index;
 }
 
 function readPointer(root: unknown, path: string): unknown {
   let current: unknown = root;
   for (const segment of decodePointer(path)) {
-    if (Array.isArray(current)) {
-      current = current[arrayIndex(segment, current.length)];
-    } else if (current && typeof current === 'object' && Object.hasOwn(current, segment)) {
-      current = (current as Record<string, unknown>)[segment];
-    } else {
-      throw new Error(`JSON Pointer does not resolve: ${path}`);
-    }
+    if (Array.isArray(current)) current = current[arrayIndex(segment, current.length)];
+    else if (current && typeof current === 'object' && Object.hasOwn(current, segment)) current = (current as Record<string, unknown>)[segment];
+    else throw new Error(`JSON Pointer does not resolve: ${path}`);
   }
   return current;
 }
@@ -92,9 +94,7 @@ function parentPointer(root: unknown, path: string): { parent: Record<string, un
   if (segments.length === 0) throw new Error('Transition IR cannot replace or tombstone the canonical root');
   assertSafeSegments(segments);
   const key = segments.pop()!;
-  const parentPath = segments.length === 0
-    ? ''
-    : `/${segments.map((segment) => segment.replace(/~/g, '~0').replace(/\//g, '~1')).join('/')}`;
+  const parentPath = segments.length === 0 ? '' : `/${segments.map((segment) => segment.replace(/~/g, '~0').replace(/\//g, '~1')).join('/')}`;
   const parent = readPointer(root, parentPath);
   if (!parent || typeof parent !== 'object') throw new Error(`JSON Pointer parent is not a container: ${path}`);
   return { parent: parent as Record<string, unknown> | unknown[], key };
@@ -120,9 +120,7 @@ function applyOperation(root: MutableJson, operation: TransitionIrOperation): vo
       return;
     case 'INCREMENT': {
       const current = readPointer(root, operation.path);
-      if (typeof current !== 'number' || !Number.isFinite(current)) {
-        throw new Error(`INCREMENT target is not a finite number: ${operation.path}`);
-      }
+      if (typeof current !== 'number' || !Number.isFinite(current)) throw new Error(`INCREMENT target is not a finite number: ${operation.path}`);
       setPointer(root, operation.path, current + operation.value);
       return;
     }
@@ -130,9 +128,7 @@ function applyOperation(root: MutableJson, operation: TransitionIrOperation): vo
       const current = readPointer(root, operation.path);
       if (!Array.isArray(current)) throw new Error(`APPEND_UNIQUE target is not an array: ${operation.path}`);
       const candidate = canonicalizeToJson(operation.value);
-      if (!current.some((item) => canonicalizeToJson(item) === candidate)) {
-        current.push(structuredClone(operation.value));
-      }
+      if (!current.some((item) => canonicalizeToJson(item) === candidate)) current.push(structuredClone(operation.value));
       return;
     }
     case 'TOMBSTONE':
@@ -140,27 +136,20 @@ function applyOperation(root: MutableJson, operation: TransitionIrOperation): vo
       return;
     case 'ASSERT': {
       const current = readPointer(root, operation.path);
-      if (canonicalizeToJson(current) !== canonicalizeToJson(operation.equals)) {
-        throw new Error(`ASSERT precondition failed: ${operation.path}`);
-      }
+      if (canonicalizeToJson(current) !== canonicalizeToJson(operation.equals)) throw new Error(`ASSERT precondition failed: ${operation.path}`);
       return;
     }
     case 'LINK_CAUSE': {
       const current = readPointer(root, operation.path);
       if (!Array.isArray(current)) throw new Error(`LINK_CAUSE target is not an array: ${operation.path}`);
       const candidate = canonicalizeToJson(operation.cause);
-      if (!current.some((item) => canonicalizeToJson(item) === candidate)) {
-        current.push(structuredClone(operation.cause));
-      }
+      if (!current.some((item) => canonicalizeToJson(item) === candidate)) current.push(structuredClone(operation.cause));
       return;
     }
   }
 }
 
-export function applyTransitionIr(
-  before: CanonicalWorldState,
-  mechanism: TransitionMechanismArtifact,
-): CanonicalWorldState {
+export function applyTransitionIr(before: CanonicalWorldState, mechanism: TransitionMechanismArtifact): CanonicalWorldState {
   assertTransitionIrV1(mechanism.ir);
   assertIrWithinDeclaredSets(mechanism.ir, mechanism.readSet, mechanism.writeSet);
   const after = structuredClone(before);
@@ -174,12 +163,7 @@ function gate(gates: GateResult[], name: string, passed: boolean, detail: string
   return passed;
 }
 
-function envelope(
-  deps: AdmissionDependencies,
-  core: TransitionReceiptCore,
-  acceptedRevisionId: string | null,
-  notes: string[],
-): TransitionReceiptEnvelope {
+function envelope(deps: AdmissionDependencies, core: TransitionReceiptCore, acceptedRevisionId: string | null, notes: string[]): TransitionReceiptEnvelope {
   return {
     schema: 'worldline-transition-receipt-v1',
     core,
@@ -190,12 +174,7 @@ function envelope(
   };
 }
 
-function preliminaryCore(
-  deps: AdmissionDependencies,
-  input: AdmissionInput,
-  gates: GateResult[],
-  baseStateHash: `sha256:${string}` | null,
-): TransitionReceiptCore {
+function preliminaryCore(deps: AdmissionDependencies, input: AdmissionInput, gates: GateResult[], baseStateHash: `sha256:${string}` | null): TransitionReceiptCore {
   return {
     schema: 'worldline-transition-receipt-core-v1',
     baseRevisionId: input.proposal.baseRevisionId,
@@ -221,10 +200,7 @@ function preliminaryCore(
   };
 }
 
-export function admitTransition(
-  deps: AdmissionDependencies,
-  input: AdmissionInput,
-): TransitionReceiptEnvelope {
+export function admitTransition(deps: AdmissionDependencies, input: AdmissionInput): TransitionReceiptEnvelope {
   const gates: GateResult[] = [];
   const stored = deps.store.getRevision(input.proposal.baseRevisionId);
   const core = preliminaryCore(deps, input, gates, stored?.revision.stateHash ?? null);
@@ -235,13 +211,14 @@ export function admitTransition(
     return envelope(deps, core, null, [detail]);
   };
 
+  if (deps.kernelVersion !== KERNEL_VERSION_V1) return reject('kernel-version', `Unsupported kernel version ${deps.kernelVersion}.`);
+  gate(gates, 'kernel-version', true, 'Kernel version is supported.');
+
   if (!stored) return reject('base-revision', `Unknown base revision ${input.proposal.baseRevisionId}`);
   gate(gates, 'base-revision', true, 'Base revision exists.');
 
   const head = deps.store.getBranchHead(stored.revision.worldId, stored.revision.branchId);
-  if (!head || head.revisionId !== stored.revision.revisionId) {
-    return reject('branch-head-freshness', 'Proposal base revision is not the current branch head.');
-  }
+  if (!head || head.revisionId !== stored.revision.revisionId) return reject('branch-head-freshness', 'Proposal base revision is not the current branch head.');
   gate(gates, 'branch-head-freshness', true, 'Proposal targets the current branch head.');
 
   if (input.mechanism.promotionStatus !== 'APPROVED_EXECUTABLE' || !input.mechanism.approvalReceiptId) {
@@ -249,14 +226,10 @@ export function admitTransition(
   }
   gate(gates, 'mechanism-claim', true, 'Mechanism carries an approved-executable claim.');
 
-  if (computeMechanismHash(input.mechanism) !== input.mechanism.mechanismHash) {
-    return reject('mechanism-integrity', 'Mechanism hash does not match the immutable mechanism definition.');
-  }
+  if (computeMechanismHash(input.mechanism) !== input.mechanism.mechanismHash) return reject('mechanism-integrity', 'Mechanism hash does not match the immutable mechanism definition.');
   gate(gates, 'mechanism-integrity', true, 'Mechanism definition hash is valid.');
 
-  if (!deps.verifyMechanismApproval) {
-    return reject('mechanism-authority', 'No trusted mechanism-approval verifier is configured.');
-  }
+  if (!deps.verifyMechanismApproval) return reject('mechanism-authority', 'No trusted mechanism-approval verifier is configured.');
   let mechanismApproved = false;
   try {
     mechanismApproved = deps.verifyMechanismApproval({
@@ -267,28 +240,42 @@ export function admitTransition(
   } catch {
     mechanismApproved = false;
   }
-  if (!mechanismApproved) {
-    return reject('mechanism-authority', 'Trusted authority did not verify the mechanism approval receipt.');
-  }
+  if (!mechanismApproved) return reject('mechanism-authority', 'Trusted authority did not verify the mechanism approval receipt.');
   gate(gates, 'mechanism-authority', true, 'Trusted authority verified the mechanism approval receipt.');
 
-  if (input.proposal.mechanismId !== input.mechanism.mechanismId) {
-    return reject('proposal-binding', 'Proposal mechanismId does not match the supplied mechanism.');
+  if (!input.proposal.producerId.trim() || !input.mechanism.producerId.trim() || !deps.verifierId.trim()) return reject('identity-presence', 'Producer and verifier identities must be present.');
+  if (!deps.verifyProducerIdentity) return reject('producer-identity', 'No trusted producer-identity verifier is configured.');
+  let producersVerified = false;
+  try {
+    producersVerified = deps.verifyProducerIdentity(input.proposal.producerId) && deps.verifyProducerIdentity(input.mechanism.producerId);
+  } catch {
+    producersVerified = false;
   }
-  if (hashCanonical(input.proposal.normalizedInputs) !== input.proposal.inputHash) {
-    return reject('input-integrity', 'Proposal inputHash does not match normalized inputs.');
-  }
-  if (input.mechanism.stateSchema !== stored.state.schema) {
-    return reject('state-schema', 'Mechanism state schema is incompatible with the base canonical state.');
-  }
-  gate(gates, 'integrity', true, 'Mechanism, proposal, inputs, and state schema are internally consistent.');
+  if (!producersVerified) return reject('producer-identity', 'Trusted identity registry did not verify all producer identities.');
+  gate(gates, 'producer-identity', true, 'Proposal and mechanism producer identities are verified.');
 
-  if (input.mechanism.deterministicSeedPolicy === 'REQUIRED' && input.proposal.seed === null) {
-    return reject('seed-policy', 'Mechanism requires an explicit deterministic seed.');
+  if (!deps.verifyVerifierIndependence) return reject('verifier-independence', 'No trusted verifier-independence check is configured.');
+  let verifierIndependent = false;
+  try {
+    verifierIndependent = input.proposal.producerId !== deps.verifierId && deps.verifyVerifierIndependence({
+      producerId: input.proposal.producerId,
+      verifierId: deps.verifierId,
+      verifierConfigDigest: deps.verifierConfigDigest,
+    });
+  } catch {
+    verifierIndependent = false;
   }
-  if (input.mechanism.deterministicSeedPolicy === 'FORBIDDEN' && input.proposal.seed !== null) {
-    return reject('seed-policy', 'Mechanism forbids a seed.');
-  }
+  if (!verifierIndependent) return reject('verifier-independence', 'Proposal producer and verifier are not independently resolved.');
+  gate(gates, 'verifier-independence', true, 'Verifier is independently resolved from the proposal producer.');
+
+  if (input.proposal.mechanismId !== input.mechanism.mechanismId) return reject('proposal-binding', 'Proposal mechanismId does not match the supplied mechanism.');
+  if (hashCanonical(input.proposal.normalizedInputs) !== input.proposal.inputHash) return reject('input-integrity', 'Proposal inputHash does not match normalized inputs.');
+  if (input.mechanism.stateSchema !== stored.state.schema) return reject('state-schema', 'Mechanism state schema is incompatible with the base canonical state.');
+  if (input.proposal.causalClaims.some((claim) => !claim.type.trim() || !claim.ref.trim())) return reject('causal-references', 'Causal references require non-empty type and ref fields.');
+  gate(gates, 'integrity', true, 'Mechanism, proposal, inputs, causal references, and state schema are internally consistent.');
+
+  if (input.mechanism.deterministicSeedPolicy === 'REQUIRED' && input.proposal.seed === null) return reject('seed-policy', 'Mechanism requires an explicit deterministic seed.');
+  if (input.mechanism.deterministicSeedPolicy === 'FORBIDDEN' && input.proposal.seed !== null) return reject('seed-policy', 'Mechanism forbids a seed.');
   gate(gates, 'seed-policy', true, 'Seed policy is satisfied.');
 
   if (input.mechanism.epistemicCeiling === 'OBSERVED' || input.mechanism.epistemicCeiling === 'RECONSTRUCTED') {
@@ -313,30 +300,17 @@ export function admitTransition(
   const replayHash = hashCanonical(replay);
   core.candidateStateHash = candidateHash;
   core.replayStateHash = replayHash;
-  if (candidateHash !== replayHash) {
-    return reject('replay-verification', 'Independent replay hash does not match the candidate state hash.');
-  }
+  if (candidateHash !== replayHash) return reject('replay-verification', 'Independent replay hash does not match the candidate state hash.');
   gate(gates, 'replay-verification', true, 'Independent replay hash matches the candidate state hash.');
 
-  if (!input.mechanism.invariantSuiteIds.includes('core')) {
-    return reject('invariant-suite', 'Approved executable must include the core invariant suite.');
-  }
-  const invariants = runCoreInvariants({
-    before: stored.state,
-    after: candidate,
-    mechanism: input.mechanism,
-    proposal: input.proposal,
-  });
+  if (!input.mechanism.invariantSuiteIds.includes('core')) return reject('invariant-suite', 'Approved executable must include the core invariant suite.');
+  const invariants = runCoreInvariants({ before: stored.state, after: candidate, mechanism: input.mechanism, proposal: input.proposal });
   core.invariants = invariants;
-  if (!allInvariantsPassed(invariants)) {
-    return reject('invariants', 'One or more core causal invariants failed.');
-  }
+  if (!allInvariantsPassed(invariants)) return reject('invariants', 'One or more core causal invariants failed.');
   gate(gates, 'invariants', true, 'All required core causal invariants passed.');
 
   const simulationTime = input.simulationTime ?? stored.revision.simulationTime;
-  if (!Number.isFinite(simulationTime) || simulationTime < stored.revision.simulationTime) {
-    return reject('simulation-time', 'Simulation time must be finite and cannot move backward.');
-  }
+  if (!Number.isFinite(simulationTime) || simulationTime < stored.revision.simulationTime) return reject('simulation-time', 'Simulation time must be finite and cannot move backward.');
   gate(gates, 'simulation-time', true, 'Simulation time is monotonic.');
 
   const humanRequired = requiresHumanApprovalForTransition({
@@ -376,14 +350,7 @@ export function admitTransition(
     }
     gate(gates, 'execution-authority', true, 'Trusted authority verified this specific execution approval.');
   }
-  gate(
-    gates,
-    'promotion-policy',
-    true,
-    humanRequired
-      ? 'Human-gated execution is verified and eligible for admission.'
-      : 'Low-risk execution is eligible for automatic admission.',
-  );
+  gate(gates, 'promotion-policy', true, humanRequired ? 'Human-gated execution is verified and eligible for admission.' : 'Low-risk execution is eligible for automatic admission.');
 
   core.decision = 'ACCEPTED';
   const coreHash = hashCanonical(core);
