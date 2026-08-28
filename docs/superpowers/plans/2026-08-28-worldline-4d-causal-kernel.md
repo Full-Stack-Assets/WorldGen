@@ -38,6 +38,7 @@ Create focused causal-kernel modules rather than expanding `state.ts` into a sec
 - `src/worldline/causal/policy.ts` — epistemic and mechanism/execution admission rules layered over existing `promotionPolicy.ts`.
 - `src/worldline/causal/kernel.ts` — genesis, proposal execution, independent replay, receipt creation, and canonical admission orchestration.
 - `src/worldline/causal/renderBoundary.ts` — immutable renderer envelope and receipt creation with no admission capability.
+- `src/worldline/causal/builtinMechanisms.ts` — built-in approved deterministic mechanisms, beginning with branch creation.
 - `src/worldline/types.ts` — add `CanonicalWorldState` and `WorldlineSessionState` while retaining compatibility aliases during migration.
 - `src/worldline/state.ts` — split durable state from session selections and remove unchecked application-level snapshot commitment.
 - `src/worldline/__tests__/causal*.test.ts` — direct tests for every authority invariant.
@@ -606,13 +607,13 @@ git commit -m "refactor(worldline): separate canonical and session state"
 **Files:**
 - Modify: `src/worldline/state.ts`
 - Create: `src/worldline/causal/builtinMechanisms.ts`
+- Modify: `src/worldline/__tests__/state.test.ts`
 - Create: `src/worldline/__tests__/causalAuthorityBoundary.test.ts`
-- Modify callers returned by repository search for `commitSnapshot(` or direct branch mutation.
 
 **Interfaces:**
 - Produces: `BUILTIN_BRANCH_MECHANISM` with source type `HUMAN_AUTHORED`, fixed digestable Transition IR contract, and `APPROVED_EXECUTABLE` status.
 - Produces: `proposeBranchCreation(input)`.
-- Removes application use of unchecked canonical snapshot replacement.
+- Removes the exported unchecked `commitSnapshot` canonical-authority function from `src/worldline/state.ts`.
 
 - [ ] **Step 1: Write the authority-boundary test**
 
@@ -640,22 +641,22 @@ Expected: FAIL while `commitSnapshot` remains exported and branch creation bypas
 
 - [ ] **Step 3: Add the approved built-in branch mechanism**
 
-Represent branch creation as deterministic operations over the canonical branches collection. The mechanism must preserve the existing seed and branch-label normalization rules or deliberately version them inside the new mechanism so replay remains stable.
+Represent branch creation as deterministic operations over the canonical branches collection. Preserve the existing seed derivation `parent.seed + branchIndex * 7919`, branch ID normalization, snapshot fork selection, and parent immutability semantics from `src/worldline/state.ts`; version those rules inside `BUILTIN_BRANCH_MECHANISM` so replay remains stable.
 
-- [ ] **Step 4: Remove `commitSnapshot` from the public application API**
+- [ ] **Step 4: Remove the unchecked commit export and migrate the existing state tests**
 
-Delete or make fixture-private the unchecked snapshot replacement helper. Repository-search all imports/usages and migrate them to causal-kernel admission or test-only fixture construction. Read-only `replayBranch` and `compareSnapshots` remain pure projections.
+Delete the exported `commitSnapshot()` function from `src/worldline/state.ts`. Update `src/worldline/__tests__/state.test.ts` so durable branch changes use the built-in causal mechanism fixture, while `replayBranch()` and `compareSnapshots()` remain pure read-only projections. The current GitHub code-search index reports no additional `commitSnapshot` call sites outside the defining module; `npm run typecheck` in Step 5 is the authoritative check for any unindexed imports.
 
 - [ ] **Step 5: Run authority, state, and replay tests**
 
 Run: `npm test -- src/worldline/__tests__/causalAuthorityBoundary.test.ts src/worldline/__tests__/state.test.ts src/worldline/__tests__/releaseSmoke.test.ts && npm run typecheck`
 
-Expected: PASS.
+Expected: PASS. Any compiler-reported import of removed `commitSnapshot` is a blocking failure and must be migrated before this task can commit.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/worldline/state.ts src/worldline/causal/builtinMechanisms.ts src/worldline/__tests__/causalAuthorityBoundary.test.ts
+git add src/worldline/state.ts src/worldline/causal/builtinMechanisms.ts src/worldline/__tests__/state.test.ts src/worldline/__tests__/causalAuthorityBoundary.test.ts
 git commit -m "refactor(worldline): close direct canonical commit bypass"
 ```
 
@@ -666,7 +667,6 @@ git commit -m "refactor(worldline): close direct canonical commit bypass"
 **Files:**
 - Create: `src/worldline/causal/renderBoundary.ts`
 - Create: `src/worldline/__tests__/causalRenderBoundary.test.ts`
-- Modify: `src/worldline/worldModelRegistry.ts` only if a type import is needed; do not change reference/evaluation claims.
 
 **Interfaces:**
 - Consumes: admitted `CanonicalRevision` and immutable canonical projection.
@@ -716,7 +716,7 @@ Expected: PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/worldline/causal/renderBoundary.ts src/worldline/__tests__/causalRenderBoundary.test.ts src/worldline/worldModelRegistry.ts
+git add src/worldline/causal/renderBoundary.ts src/worldline/__tests__/causalRenderBoundary.test.ts
 git commit -m "feat(worldline): isolate renderers from canonical authority"
 ```
 
@@ -736,7 +736,7 @@ git commit -m "feat(worldline): isolate renderers from canonical authority"
 
 - [ ] **Step 1: Add the complete adverse matrix**
 
-Create one table-driven Vitest suite that explicitly asserts:
+Create one table-driven Vitest suite that explicitly covers these spec requirements:
 
 ```ts
 const cases = [
@@ -758,7 +758,7 @@ const cases = [
 ] as const;
 ```
 
-Implement each case as an actual `it(...)` using the shared causal fixture rather than asserting the strings themselves.
+Implement each requirement as an actual `it(...)` using the shared causal fixture; the array is the review checklist, not the assertion body.
 
 - [ ] **Step 2: Run the complete causal suite**
 
@@ -832,6 +832,10 @@ This plan does not modify Supabase schemas/RPCs, production persistence, credent
 ### Type consistency
 
 The plan uses the same v1 names throughout: `CanonicalRevision`, `TransitionMechanismArtifact`, `TransitionProposal`, `TransitionReceiptCore`, `ProducerIdentityInput`, `CanonicalWorldState`, `WorldlineSessionState`, `RenderEnvelope`, `RenderReceipt`, `deriveProducerId`, `createGenesisRevision`, `createInMemoryCanonicalStore`, `validateTransitionIr`, `executeTransitionIr`, `evaluateMechanismExecutionPolicy`, `validateEpistemicTransition`, `createTransitionProposal`, `admitTransition`, and `createRenderEnvelope`.
+
+### Placeholder and exact-file scan
+
+No `TBD`, `TODO`, `implement later`, or generic "write tests" steps remain. Task 8 is limited to the exact defining module and existing state test because the current GitHub code-search index reports zero indexed `commitSnapshot` call sites; compiler failure is explicitly treated as a blocking verification signal rather than silently broadening scope.
 
 ### Execution order
 
