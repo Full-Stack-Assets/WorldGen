@@ -70,19 +70,6 @@ export interface BranchRecord {
   events: WorldlineEvent[];
 }
 
-export interface CanonicalWorldState {
-  worlds: WorldRecord[];
-  branches: Record<string, BranchRecord>;
-}
-
-export interface WorldlineSessionState {
-  activeWorldId: string;
-  activeBranchId: string;
-  selectedYear: number;
-  timeMode: TimeMode;
-}
-
-/** Compatibility view only. This aggregate is not the canonical-authority type. */
 export interface WorldlineState {
   worlds: WorldRecord[];
   activeWorld: WorldRecord;

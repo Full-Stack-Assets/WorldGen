@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createBranchThroughKernel } from '../causal/builtinMechanisms';
-import { createInitialWorldlineState, replayBranch, selectWorld } from '../state';
+import { createBranch, createInitialWorldlineState, replayBranch, selectWorld } from '../state';
 
 describe('Worldline state', () => {
   it('starts on the procedural generated world with explicit epistemic and fidelity labels', () => {
@@ -9,16 +8,16 @@ describe('Worldline state', () => {
     expect(state.activeWorld.fidelity).toBe('FIELD');
   });
 
-  it('replays an admitted deterministic branch to identical committed state', async () => {
+  it('replays a deterministic branch to identical committed state', () => {
     const state = createInitialWorldlineState();
-    const result = await createBranchThroughKernel(state, { label: 'reinvention', atYear: 2030 });
-    expect(replayBranch(result.state, result.state.activeBranchId)).toEqual(replayBranch(result.state, result.state.activeBranchId));
+    const branched = createBranch(state, { label: 'reinvention', atYear: 2030 });
+    expect(replayBranch(branched, branched.activeBranchId)).toEqual(replayBranch(branched, branched.activeBranchId));
   });
 
-  it('never mutates a parent branch when admitting a child', async () => {
+  it('never mutates a parent branch when creating a child', () => {
     const state = createInitialWorldlineState();
     const before = JSON.stringify(state.branches[state.activeBranchId]);
-    await createBranchThroughKernel(state, { label: 'alternate', atYear: 2032 });
+    createBranch(state, { label: 'alternate', atYear: 2032 });
     expect(JSON.stringify(state.branches[state.activeBranchId])).toBe(before);
   });
 
