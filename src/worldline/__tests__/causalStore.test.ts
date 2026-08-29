@@ -9,25 +9,31 @@ describe('canonical store', () => {
       worldId: 'worldgen-prime', branchId: 'root', simulationTime: 2026,
       stateSchema: 'worldline-state-v1', epistemicClass: 'GENERATED', kernelVersion: 'causal-kernel-v1', state,
     });
-    store.putGenesis(revision, state);
+    await store.putGenesis(revision, state);
     state.worlds.push({ id: 'external-mutation' } as never);
     expect(store.getStateByHash(revision.stateHash)).toEqual({ worlds: [], branches: {} });
     expect(store.getBranchHead('root')?.revisionId).toBe(revision.revisionId);
   });
 
-  it('rejects children whose parent revision is missing', async () => {
+  it('rejects state bytes that do not match the declared revision hash', async () => {
     const store = createInMemoryCanonicalStore();
     const state = { worlds: [], branches: {} };
-    const genesis = await createGenesisRevision({
+    const revision = await createGenesisRevision({
       worldId: 'worldgen-prime', branchId: 'root', simulationTime: 2026,
       stateSchema: 'worldline-state-v1', epistemicClass: 'GENERATED', kernelVersion: 'causal-kernel-v1', state,
     });
-    store.putGenesis(genesis, state);
-    expect(() => store.appendRevision({
-      ...genesis,
-      revisionId: 'revision:bad',
-      parentRevisionId: 'revision:missing',
-      sequence: 1,
-    }, state)).toThrow('Missing parent revision');
+    await expect(store.putGenesis(revision, { worlds: [{ id: 'tampered' }], branches: {} }))
+      .rejects.toThrow('State hash mismatch');
+  });
+
+  it('rejects a revision whose content-addressed identity was altered', async () => {
+    const store = createInMemoryCanonicalStore();
+    const state = { worlds: [], branches: {} };
+    const revision = await createGenesisRevision({
+      worldId: 'worldgen-prime', branchId: 'root', simulationTime: 2026,
+      stateSchema: 'worldline-state-v1', epistemicClass: 'GENERATED', kernelVersion: 'causal-kernel-v1', state,
+    });
+    await expect(store.putGenesis({ ...revision, revisionId: 'revision:bad' }, state))
+      .rejects.toThrow('Revision identity mismatch');
   });
 });
