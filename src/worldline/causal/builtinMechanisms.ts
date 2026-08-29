@@ -1,5 +1,6 @@
 import { hashCanonical } from './canonicalJson';
 import { admitTransition, createTransitionProposal } from './kernel';
+import { computeMechanismContentHash } from './mechanismIdentity';
 import { createGenesisRevision, createInMemoryCanonicalStore } from './store';
 import { executeTransitionIr, type TransitionIrProgram } from './transitionIr';
 import type { CanonicalRevision, TransitionMechanismArtifact, TransitionReceiptEnvelope } from './types';
@@ -36,7 +37,7 @@ function divergedSnapshot(source: WorldSnapshot, branchId: string, forkYear: num
     return [key, value];
   }));
   const metricText = Object.entries(metrics)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
     .map(([key, value]) => `${key}:${value}`)
     .join('|');
   return {
@@ -55,14 +56,16 @@ function buildBranch(canonical: CanonicalWorldState, activeBranchId: string, inp
   if (eligibleSnapshots.length === 0) throw new Error('Cannot branch before the first committed snapshot');
   const actualForkYear = eligibleSnapshots[eligibleSnapshots.length - 1].year;
   const branchIndex = Object.keys(canonical.branches).length;
-  const slug = input.label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const normalizedLabel = input.label.normalize('NFC');
+  const slug = normalizedLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const id = `branch-${branchIndex}-${slug}`;
+  if (canonical.branches[id]) throw new Error(`Branch already exists: ${id}`);
   const direction = branchIndex % 2 === 0 ? -1 : 1;
   const sourceSnapshots = parent.snapshots.filter((snapshot) => snapshot.year >= actualForkYear);
   const childSnapshots = sourceSnapshots.map((snapshot) => divergedSnapshot(snapshot, id, actualForkYear, direction));
   const child: BranchRecord = {
     id,
-    label: input.label,
+    label: normalizedLabel,
     parentId: parent.id,
     forkYear: actualForkYear,
     seed: parent.seed + branchIndex * BUILTIN_BRANCH_MECHANISM.seedMultiplier,
@@ -86,11 +89,10 @@ function buildBranch(canonical: CanonicalWorldState, activeBranchId: string, inp
 }
 
 export async function createBuiltinBranchMechanism(): Promise<TransitionMechanismArtifact> {
-  const contentHash = await hashCanonical(BUILTIN_BRANCH_MECHANISM);
-  return {
+  const candidate: TransitionMechanismArtifact = {
     schema: 'worldline-transition-mechanism-v1',
     mechanismId: BUILTIN_BRANCH_MECHANISM.mechanismId,
-    contentHash,
+    contentHash: 'sha256:pending',
     sourceType: 'HUMAN_AUTHORED',
     producerId: 'producer:worldline-builtin-branch-v1',
     executorKind: 'TRANSITION_IR_V1',
@@ -100,7 +102,7 @@ export async function createBuiltinBranchMechanism(): Promise<TransitionMechanis
     inputSchema: { type: 'object', required: ['branches'] },
     epistemicCeiling: 'SIMULATED',
     seedPolicy: 'NONE',
-    invariantSuiteRefs: ['branch-parent-immutability-v1'],
+    invariantSuiteRefs: ['branch-parent-immutability-v1', 'worldline-branch-rules-v1'],
     riskClass: 'REVERSIBLE_TUNING',
     reversible: true,
     machineVerifiable: true,
@@ -109,6 +111,8 @@ export async function createBuiltinBranchMechanism(): Promise<TransitionMechanis
     approvalReceiptId: 'human-authority:worldline-4d-causal-kernel-plan',
     program: BRANCH_PROGRAM,
   };
+  candidate.contentHash = await computeMechanismContentHash(candidate);
+  return candidate;
 }
 
 export async function createBranchThroughKernel(state: WorldlineState, input: { label: string; atYear: number }): Promise<{
@@ -132,9 +136,9 @@ export async function createBranchThroughKernel(state: WorldlineState, input: { 
     kernelVersion: 'causal-kernel-v1',
     state: canonical,
   });
-  store.putGenesis(genesis, canonical);
+  await store.putGenesis(genesis, canonical);
   const mechanism = await createBuiltinBranchMechanism();
-  store.putMechanism(mechanism);
+  await store.putMechanism(mechanism);
   const proposal = await createTransitionProposal({
     baseRevisionId: genesis.revisionId,
     mechanismId: mechanism.mechanismId,
