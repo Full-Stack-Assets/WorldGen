@@ -31,6 +31,8 @@ export interface TransitionIrMechanismBoundary {
 }
 
 const FORBIDDEN_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
+const ALLOWED_OPERATIONS = new Set(['SET', 'INCREMENT', 'APPEND_UNIQUE', 'TOMBSTONE', 'ASSERT', 'LINK_CAUSE']);
+const ALLOWED_COMPARATORS = new Set(['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE', 'TRUTHY', 'FALSY']);
 
 function parsePointer(path: string): string[] {
   if (!path.startsWith('/')) throw new Error(`Invalid JSON Pointer: ${path}`);
@@ -100,6 +102,7 @@ function finite(value: number): number {
 }
 
 function compare(comparator: TransitionIrComparator, left: unknown, right?: unknown): boolean {
+  if (!ALLOWED_COMPARATORS.has(comparator)) throw new Error(`Unsupported comparator: ${String(comparator)}`);
   switch (comparator) {
     case 'EQ': return Object.is(left, right) || left === right;
     case 'NEQ': return !(Object.is(left, right) || left === right);
@@ -145,6 +148,7 @@ function evaluate(expression: TransitionIrExpression, state: unknown, inputs: Re
     case 'AND': return expression.args.every((item) => Boolean(evaluate(item, state, inputs)));
     case 'OR': return expression.args.some((item) => Boolean(evaluate(item, state, inputs)));
     case 'NOT': return !Boolean(evaluate(expression.value, state, inputs));
+    default: throw new Error(`Unsupported expression operator: ${String((expression as { expr?: unknown }).expr)}`);
   }
 }
 
@@ -162,7 +166,13 @@ function validateCause(value: unknown): asserts value is CausalReference {
 export function validateTransitionIr(program: TransitionIrProgram, mechanism: TransitionIrMechanismBoundary): void {
   if (!program || program.version !== 'TRANSITION_IR_V1' || !Array.isArray(program.operations)) throw new Error('Unsupported Transition IR');
   for (const operation of program.operations) {
+    if (!operation || typeof operation !== 'object' || !ALLOWED_OPERATIONS.has(String((operation as { op?: unknown }).op))) {
+      throw new Error(`Unsupported transition operation: ${String((operation as { op?: unknown })?.op)}`);
+    }
     parsePointer(operation.path);
+    if (operation.op === 'ASSERT' && !ALLOWED_COMPARATORS.has(String(operation.comparator))) {
+      throw new Error(`Unsupported comparator: ${String(operation.comparator)}`);
+    }
     const writes = operation.op !== 'ASSERT';
     if (writes && !pathAllowed(operation.path, mechanism.writeSet)) throw new Error(`Undeclared write path: ${operation.path}`);
     const reads: string[] = [];
