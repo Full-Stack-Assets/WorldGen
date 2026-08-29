@@ -1,4 +1,5 @@
 import { canonicalize, hashCanonical } from './canonicalJson';
+import { verifyMechanismContentHash } from './mechanismIdentity';
 import type {
   CanonicalRevision,
   TransitionMechanismArtifact,
@@ -43,7 +44,9 @@ export function createInMemoryCanonicalStore() {
   const mechanisms = new Map<string, TransitionMechanismArtifact>();
   const receipts = new Map<string, TransitionReceiptEnvelope>();
 
-  const putState = (hash: string, state: unknown): void => {
+  const putState = async (hash: string, state: unknown): Promise<void> => {
+    const computed = await hashCanonical(state);
+    if (computed !== hash) throw new Error('State hash mismatch');
     const canonical = canonicalize(state);
     const existing = stateCanonical.get(hash);
     if (existing !== undefined && existing !== canonical) throw new Error('State hash replacement rejected');
@@ -53,22 +56,22 @@ export function createInMemoryCanonicalStore() {
     }
   };
 
-  const putRevision = (revision: CanonicalRevision, state: unknown): void => {
+  const putRevision = async (revision: CanonicalRevision, state: unknown): Promise<void> => {
     const existing = revisions.get(revision.revisionId);
     if (existing && canonicalize(existing) !== canonicalize(revision)) throw new Error('Revision replacement rejected');
     if (existing) return;
-    putState(revision.stateHash, state);
+    await putState(revision.stateHash, state);
     revisions.set(revision.revisionId, structuredClone(revision));
   };
 
-  const putGenesis = (revision: CanonicalRevision, state: unknown): void => {
+  const putGenesis = async (revision: CanonicalRevision, state: unknown): Promise<void> => {
     if (revision.parentRevisionId !== null || revision.sequence !== 0) throw new Error('Invalid genesis revision');
     if (branchHeads.has(revision.branchId)) throw new Error('Genesis branch already exists');
-    putRevision(revision, state);
+    await putRevision(revision, state);
     branchHeads.set(revision.branchId, revision.revisionId);
   };
 
-  const appendRevision = (revision: CanonicalRevision, state: unknown): void => {
+  const appendRevision = async (revision: CanonicalRevision, state: unknown): Promise<void> => {
     if (!revision.parentRevisionId) throw new Error('Child revision requires parent');
     const parent = revisions.get(revision.parentRevisionId);
     if (!parent) throw new Error('Missing parent revision');
@@ -77,17 +80,19 @@ export function createInMemoryCanonicalStore() {
     if (currentHead === undefined && parent.branchId === revision.branchId && parent.revisionId !== revision.parentRevisionId) {
       throw new Error('Invalid branch ancestry');
     }
-    putRevision(revision, state);
+    await putRevision(revision, state);
     branchHeads.set(revision.branchId, revision.revisionId);
   };
 
-  const putMechanism = (mechanism: TransitionMechanismArtifact): void => {
+  const putMechanism = async (mechanism: TransitionMechanismArtifact): Promise<void> => {
+    if (!await verifyMechanismContentHash(mechanism)) throw new Error('Mechanism content hash mismatch');
     const existing = mechanisms.get(mechanism.mechanismId);
     if (existing && canonicalize(existing) !== canonicalize(mechanism)) throw new Error('Mechanism replacement rejected');
     if (!existing) mechanisms.set(mechanism.mechanismId, structuredClone(mechanism));
   };
 
-  const putReceipt = (receipt: TransitionReceiptEnvelope): void => {
+  const putReceipt = async (receipt: TransitionReceiptEnvelope): Promise<void> => {
+    if (await hashCanonical(receipt.core) !== receipt.coreHash) throw new Error('Receipt core hash mismatch');
     const key = receipt.coreHash;
     const existing = receipts.get(key);
     if (existing && canonicalize(existing.core) !== canonicalize(receipt.core)) throw new Error('Receipt replacement rejected');
