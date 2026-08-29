@@ -4,8 +4,7 @@ import { runExperiment } from '../../worldline/experiments';
 import { createIntervention, type InterventionInput } from '../../worldline/interventions';
 import type { ProviderStatus } from '../../worldline/providers';
 import { deleteRemoteProject, listRemoteProjects, syncRemoteProject } from '../../worldline/remoteStudio';
-import { createBranchThroughKernel } from '../../worldline/causal/builtinMechanisms';
-import { selectBranch, selectWorld, selectYear } from '../../worldline/state';
+import { createBranch, selectBranch, selectWorld, selectYear } from '../../worldline/state';
 import { createWorldProject, type WorldProject } from '../../worldline/studioProjects';
 import { createStudioProjectStore } from '../../worldline/studioStorage';
 import type { TimeMode, WorldlineState, WorldSnapshot } from '../../worldline/types';
@@ -303,18 +302,6 @@ export function WorldlineShell({
     setStudioNotice(`Experiment committed from ${baseline.year} baseline. Scenario result is not a calibrated forecast.`);
   };
 
-  const createFutureBranch = () => {
-    void createBranchThroughKernel(state, {
-      label: `Future ${branchCount}`,
-      atYear: state.selectedYear,
-    }).then((result) => {
-      applyStateChange(result.state);
-      setStudioNotice('Future branch admitted through the deterministic causal kernel.');
-    }).catch((error) => {
-      setStudioNotice(error instanceof Error ? error.message : 'Future branch admission failed.');
-    });
-  };
-
   return (
     <main className={`wl-app ${truthLens ? `wl-truth-active ${truthClass}` : ''} ${exploreFocus ? 'wl-explore-focus' : ''}`}>
       <div className="wl-scene">{scene}</div>
@@ -355,7 +342,7 @@ export function WorldlineShell({
             state={state}
             interventions={project.interventions}
             experiments={project.experiments}
-            onCreateBranch={createFutureBranch}
+            onCreateBranch={() => applyStateChange(createBranch(state, { label: `Future ${branchCount}`, atYear: state.selectedYear }))}
             onSelectBranch={(branchId) => applyStateChange(selectBranch(state, branchId))}
             onAddIntervention={addIntervention}
             onRunExperiment={runStudioExperiment}
