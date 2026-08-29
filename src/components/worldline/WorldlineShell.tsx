@@ -4,7 +4,8 @@ import { runExperiment } from '../../worldline/experiments';
 import { createIntervention, type InterventionInput } from '../../worldline/interventions';
 import type { ProviderStatus } from '../../worldline/providers';
 import { deleteRemoteProject, listRemoteProjects, syncRemoteProject } from '../../worldline/remoteStudio';
-import { createBranch, selectBranch, selectWorld, selectYear } from '../../worldline/state';
+import { createBranchThroughKernel } from '../../worldline/causal/builtinMechanisms';
+import { selectBranch, selectWorld, selectYear } from '../../worldline/state';
 import { createWorldProject, type WorldProject } from '../../worldline/studioProjects';
 import { createStudioProjectStore } from '../../worldline/studioStorage';
 import type { TimeMode, WorldlineState, WorldSnapshot } from '../../worldline/types';
@@ -20,6 +21,7 @@ import { StudioProjectBar } from './StudioProjectBar';
 import { TimeNavigator } from './TimeNavigator';
 import { TruthLens, epistemicVisualClass } from './TruthLens';
 import { WorldlineHUD } from './WorldlineHUD';
+import { TemporalRealityStudio } from './TemporalRealityStudio';
 import './worldline.css';
 import './worldline-v02.css';
 import './worldline-v05.css';
@@ -28,8 +30,9 @@ import './worldline-v10.css';
 import './worldline-v20.css';
 import './worldline-v21.css';
 import './worldline-future.css';
+import './temporal-reality-studio.css';
 
-export const NAV_ITEMS = ['WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY'] as const;
+export const NAV_ITEMS = ['STUDIO', 'WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY'] as const;
 export type WorldlineSurface = typeof NAV_ITEMS[number];
 
 function timestamp(): string {
@@ -81,7 +84,7 @@ export function WorldlineShell({
       return null;
     }
   }, []);
-  const [surface, setSurface] = useState<WorldlineSurface>('WORLD');
+  const [surface, setSurface] = useState<WorldlineSurface>('STUDIO');
   const [mechanicsOpen, setMechanicsOpen] = useState(false);
   const [truthLens, setTruthLens] = useState(false);
   const [chronosOpen, setChronosOpen] = useState(false);
@@ -156,7 +159,7 @@ export function WorldlineShell({
       sequence: projectSequence.current++,
     });
     setProject(next);
-    setSurface('WORLD');
+    setSurface('STUDIO');
     setTruthLens(false);
     setSelectedExperimentId(null);
     setSaved(false);
@@ -302,6 +305,18 @@ export function WorldlineShell({
     setStudioNotice(`Experiment committed from ${baseline.year} baseline. Scenario result is not a calibrated forecast.`);
   };
 
+  const createFutureBranch = () => {
+    void createBranchThroughKernel(state, {
+      label: `Future ${branchCount}`,
+      atYear: state.selectedYear,
+    }).then((result) => {
+      applyStateChange(result.state);
+      setStudioNotice('Future branch admitted through the deterministic causal kernel.');
+    }).catch((error) => {
+      setStudioNotice(error instanceof Error ? error.message : 'Future branch admission failed.');
+    });
+  };
+
   return (
     <main className={`wl-app ${truthLens ? `wl-truth-active ${truthClass}` : ''} ${exploreFocus ? 'wl-explore-focus' : ''}`}>
       <div className="wl-scene">{scene}</div>
@@ -336,13 +351,19 @@ export function WorldlineShell({
         </nav>
 
         <div className="wl-surface" data-surface={surface}>
+          {surface === 'STUDIO' && <TemporalRealityStudio
+            state={state}
+            onYear={(year) => applyStateChange(selectYear(state, year))}
+            onCreateBranch={createFutureBranch}
+            onSelectBranch={(branchId) => applyStateChange(selectBranch(state, branchId))}
+          />}
           {surface === 'WORLD' && <section className="wl-panel wl-world-tools glass-panel"><div className="wl-panel-kicker">WORLD</div><h2>World Controls</h2>{worldTools}{studioNotice && <p className="wl-studio-notice" role="status">{studioNotice}</p>}</section>}
           {surface === 'TIME' && <TimeNavigator state={state} onYear={(year) => applyStateChange(selectYear(state, year))} onMode={setTimeMode} />}
           {surface === 'FUTURES' && <FutureNavigator
             state={state}
             interventions={project.interventions}
             experiments={project.experiments}
-            onCreateBranch={() => applyStateChange(createBranch(state, { label: `Future ${branchCount}`, atYear: state.selectedYear }))}
+            onCreateBranch={createFutureBranch}
             onSelectBranch={(branchId) => applyStateChange(selectBranch(state, branchId))}
             onAddIntervention={addIntervention}
             onRunExperiment={runStudioExperiment}
