@@ -1,5 +1,5 @@
 import { ROOT_BRANCH, WORLD_CATALOG } from './fixtures';
-import type { BranchRecord, SnapshotDifference, WorldSnapshot, WorldlineState } from './types';
+import type { SnapshotDifference, WorldSnapshot, WorldlineState } from './types';
 
 export function createInitialWorldlineState(): WorldlineState {
   const root = structuredClone(ROOT_BRANCH);
@@ -16,16 +16,6 @@ export function createInitialWorldlineState(): WorldlineState {
 
 export function createFlagshipWorldlineState(): WorldlineState {
   return selectWorld(createInitialWorldlineState(), 'new-bedford-001');
-}
-
-export function commitSnapshot(state: WorldlineState, snapshot: WorldSnapshot): WorldlineState {
-  const branch = state.branches[snapshot.branchId];
-  if (!branch) throw new Error(`Unknown branch ${snapshot.branchId}`);
-  const nextBranch: BranchRecord = {
-    ...branch,
-    snapshots: [...branch.snapshots.filter((item) => item.year !== snapshot.year), structuredClone(snapshot)].sort((a, b) => a.year - b.year),
-  };
-  return { ...state, branches: { ...state.branches, [branch.id]: nextBranch } };
 }
 
 function divergedSnapshot(source: WorldSnapshot, branchId: string, forkYear: number, direction: number): WorldSnapshot {
@@ -47,6 +37,12 @@ function divergedSnapshot(source: WorldSnapshot, branchId: string, forkYear: num
   };
 }
 
+/**
+ * Legacy deterministic branch fixture retained for current UI compatibility.
+ * This helper is not a causal-kernel canonical admission API. Stage C migration
+ * will replace its application use with an approved built-in branch mechanism
+ * or a wrapper that emits a TransitionProposal for admission.
+ */
 export function createBranch(state: WorldlineState, input: { label: string; atYear: number }): WorldlineState {
   const parent = state.branches[state.activeBranchId];
   if (!parent) throw new Error('Active branch is missing');
@@ -58,7 +54,7 @@ export function createBranch(state: WorldlineState, input: { label: string; atYe
   const direction = branchIndex % 2 === 0 ? -1 : 1;
   const sourceSnapshots = parent.snapshots.filter((snapshot) => snapshot.year >= actualForkYear);
   const childSnapshots = sourceSnapshots.map((snapshot) => divergedSnapshot(snapshot, id, actualForkYear, direction));
-  const child: BranchRecord = {
+  const child = {
     id,
     label: input.label,
     parentId: parent.id,
