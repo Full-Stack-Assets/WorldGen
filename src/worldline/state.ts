@@ -1,17 +1,51 @@
 import { ROOT_BRANCH, WORLD_CATALOG } from './fixtures';
-import type { BranchRecord, SnapshotDifference, WorldSnapshot, WorldlineState } from './types';
+import type {
+  BranchRecord,
+  CanonicalWorldState,
+  SnapshotDifference,
+  WorldSnapshot,
+  WorldlineSessionState,
+  WorldlineState,
+} from './types';
 
-export function createInitialWorldlineState(): WorldlineState {
+export function createInitialCanonicalWorldState(): CanonicalWorldState {
   const root = structuredClone(ROOT_BRANCH);
   const worlds = structuredClone(WORLD_CATALOG);
   return {
     worlds,
-    activeWorld: worlds[0],
     branches: { [root.id]: root },
-    activeBranchId: root.id,
+  };
+}
+
+export function createInitialWorldlineSessionState(canonical: CanonicalWorldState): WorldlineSessionState {
+  const firstWorld = canonical.worlds[0];
+  const firstBranchId = Object.keys(canonical.branches)[0];
+  if (!firstWorld || !firstBranchId) throw new Error('Canonical world state requires a world and branch');
+  return {
+    activeWorldId: firstWorld.id,
+    activeBranchId: firstBranchId,
     selectedYear: 2026,
     timeMode: 'SLICE',
   };
+}
+
+function composeWorldlineState(canonical: CanonicalWorldState, session: WorldlineSessionState): WorldlineState {
+  const activeWorld = canonical.worlds.find((world) => world.id === session.activeWorldId);
+  if (!activeWorld) throw new Error(`Unknown world ${session.activeWorldId}`);
+  if (!canonical.branches[session.activeBranchId]) throw new Error(`Unknown branch ${session.activeBranchId}`);
+  return {
+    worlds: structuredClone(canonical.worlds),
+    activeWorld: structuredClone(activeWorld),
+    branches: structuredClone(canonical.branches),
+    activeBranchId: session.activeBranchId,
+    selectedYear: session.selectedYear,
+    timeMode: session.timeMode,
+  };
+}
+
+export function createInitialWorldlineState(): WorldlineState {
+  const canonical = createInitialCanonicalWorldState();
+  return composeWorldlineState(canonical, createInitialWorldlineSessionState(canonical));
 }
 
 export function createFlagshipWorldlineState(): WorldlineState {
@@ -81,7 +115,7 @@ export function createBranch(state: WorldlineState, input: { label: string; atYe
   };
 }
 
-export function replayBranch(state: WorldlineState, branchId: string): WorldSnapshot[] {
+export function replayBranch(state: Pick<WorldlineState, 'branches'>, branchId: string): WorldSnapshot[] {
   const branch = state.branches[branchId];
   if (!branch) throw new Error(`Unknown branch ${branchId}`);
   return structuredClone(branch.snapshots).sort((a, b) => a.year - b.year);
@@ -94,6 +128,22 @@ export function compareSnapshots(left: WorldSnapshot, right: WorldSnapshot): Sna
     const rightValue = right.metrics[metric] ?? 0;
     return { metric, left: leftValue, right: rightValue, delta: rightValue - leftValue };
   });
+}
+
+export function selectSessionWorld(session: WorldlineSessionState, worldId: string): WorldlineSessionState {
+  return { ...session, activeWorldId: worldId };
+}
+
+export function selectSessionYear(session: WorldlineSessionState, year: number): WorldlineSessionState {
+  return { ...session, selectedYear: year };
+}
+
+export function selectSessionBranch(session: WorldlineSessionState, branchId: string): WorldlineSessionState {
+  return { ...session, activeBranchId: branchId };
+}
+
+export function selectSessionTimeMode(session: WorldlineSessionState, timeMode: WorldlineSessionState['timeMode']): WorldlineSessionState {
+  return { ...session, timeMode };
 }
 
 export function selectWorld(state: WorldlineState, worldId: string): WorldlineState {
