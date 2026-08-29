@@ -137,12 +137,72 @@ export async function executeCandidate(store: CanonicalStore, proposal: Transiti
   };
 }
 
+async function createPreExecutionReceipt(
+  store: CanonicalStore,
+  proposal: TransitionProposal,
+  verifier: IndependentVerifier,
+  decision: 'REJECTED' | 'HUMAN_REQUIRED',
+  reason: string,
+): Promise<TransitionReceiptEnvelope | null> {
+  if (!verifier?.verifierId || !verifier.configDigest) return null;
+  const base = store.getRevision(proposal.baseRevisionId);
+  const mechanism = store.getMechanism(proposal.mechanismId);
+  if (!base || !mechanism) return null;
+  const core: TransitionReceiptCore = {
+    schema: 'worldline-transition-receipt-v1',
+    baseRevisionId: base.revisionId,
+    baseStateHash: base.stateHash,
+    mechanismId: mechanism.mechanismId,
+    mechanismHash: mechanism.contentHash,
+    proposalId: proposal.proposalId,
+    inputHash: proposal.inputHash,
+    producerId: proposal.producerId,
+    kernelVersion: base.kernelVersion,
+    prng: proposal.seed ? { id: 'explicit-seed-v1', seed: proposal.seed } : null,
+    declaredReadSet: [...mechanism.readSet],
+    declaredWriteSet: [...mechanism.writeSet],
+    gates: [{
+      id: 'pre-execution',
+      result: decision === 'HUMAN_REQUIRED' ? 'HUMAN_REQUIRED' : 'FAIL',
+      detail: reason,
+    }],
+    invariants: [],
+    candidateStateHash: null,
+    independentReplayStateHash: null,
+    verifierId: verifier.verifierId,
+    verifierConfigDigest: verifier.configDigest,
+    decision,
+    humanApprovalRef: decision === 'HUMAN_REQUIRED' ? mechanism.approvalReceiptId ?? null : null,
+  };
+  const coreHash = await hashCanonical(core);
+  const receipt: TransitionReceiptEnvelope = { core, coreHash };
+  store.putReceipt(receipt);
+  return receipt;
+}
+
 export async function admitTransition(store: CanonicalStore, proposal: TransitionProposal, verifier: IndependentVerifier): Promise<{
   decision: 'ACCEPTED' | 'REJECTED' | 'HUMAN_REQUIRED';
   receipt: TransitionReceiptEnvelope;
   revision?: CanonicalRevision;
 }> {
-  const execution = await executeCandidate(store, proposal, verifier);
+  let execution: Awaited<ReturnType<typeof executeCandidate>>;
+  try {
+    execution = await executeCandidate(store, proposal, verifier);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const humanRequired = message === 'Mechanism requires Human Authority promotion'
+      || message === 'Mechanism execution requires Human Authority';
+    const auditable = humanRequired
+      || message === 'Stale base revision'
+      || message === 'Producer/verifier identity collision'
+      || message === 'Mechanism is not executable';
+    if (auditable) {
+      const decision = humanRequired ? 'HUMAN_REQUIRED' : 'REJECTED';
+      const receipt = await createPreExecutionReceipt(store, proposal, verifier, decision, message);
+      if (receipt) return { decision, receipt };
+    }
+    throw error;
+  }
   const gates: GateResult[] = [
     gate('base-current', true, 'Proposal is bound to the current branch head.'),
     gate('mechanism-approved', execution.mechanism.promotionStatus === 'APPROVED_EXECUTABLE', 'Mechanism promotion status checked.'),
