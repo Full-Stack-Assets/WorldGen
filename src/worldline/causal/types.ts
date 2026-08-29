@@ -105,8 +105,8 @@ export interface TransitionReceiptCore {
   declaredWriteSet: readonly string[];
   gates: readonly GateResult[];
   invariants: readonly InvariantResult[];
-  candidateStateHash: Sha256Digest;
-  independentReplayStateHash: Sha256Digest;
+  candidateStateHash: Sha256Digest | null;
+  independentReplayStateHash: Sha256Digest | null;
   verifierId: string;
   verifierConfigDigest: Sha256Digest;
   decision: TransitionDecision;
