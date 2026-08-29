@@ -17,6 +17,16 @@ export interface GenesisRevisionInput {
   state: unknown;
 }
 
+function revisionPayload(revision: CanonicalRevision): Omit<CanonicalRevision, 'revisionId'> {
+  const { revisionId: _revisionId, ...payload } = revision;
+  return payload;
+}
+
+async function verifyRevisionIdentity(revision: CanonicalRevision): Promise<boolean> {
+  const digest = await hashCanonical(revisionPayload(revision));
+  return revision.revisionId === `revision:${digest.slice('sha256:'.length)}`;
+}
+
 export async function createGenesisRevision(input: GenesisRevisionInput): Promise<CanonicalRevision> {
   const stateHash = await hashCanonical(input.state);
   const deterministic = {
@@ -57,6 +67,7 @@ export function createInMemoryCanonicalStore() {
   };
 
   const putRevision = async (revision: CanonicalRevision, state: unknown): Promise<void> => {
+    if (!await verifyRevisionIdentity(revision)) throw new Error('Revision identity mismatch');
     const existing = revisions.get(revision.revisionId);
     if (existing && canonicalize(existing) !== canonicalize(revision)) throw new Error('Revision replacement rejected');
     if (existing) return;
@@ -65,21 +76,44 @@ export function createInMemoryCanonicalStore() {
   };
 
   const putGenesis = async (revision: CanonicalRevision, state: unknown): Promise<void> => {
-    if (revision.parentRevisionId !== null || revision.sequence !== 0) throw new Error('Invalid genesis revision');
+    if (revision.parentRevisionId !== null || revision.sequence !== 0 || revision.transitionReceiptCoreHash !== null) {
+      throw new Error('Invalid genesis revision');
+    }
     if (branchHeads.has(revision.branchId)) throw new Error('Genesis branch already exists');
     await putRevision(revision, state);
     branchHeads.set(revision.branchId, revision.revisionId);
   };
 
   const appendRevision = async (revision: CanonicalRevision, state: unknown): Promise<void> => {
-    if (!revision.parentRevisionId) throw new Error('Child revision requires parent');
+    if (!revision.parentRevisionId || !revision.transitionReceiptCoreHash) throw new Error('Child revision requires parent and receipt');
     const parent = revisions.get(revision.parentRevisionId);
     if (!parent) throw new Error('Missing parent revision');
+    if (revision.sequence !== parent.sequence + 1) throw new Error('Revision sequence continuity rejected');
+    if (revision.worldId !== parent.worldId || revision.stateSchema !== parent.stateSchema || revision.kernelVersion !== parent.kernelVersion) {
+      throw new Error('Revision trust-boundary mismatch');
+    }
+
+    const receipt = receipts.get(revision.transitionReceiptCoreHash);
+    if (!receipt) throw new Error('Accepted revision requires stored transition receipt');
+    if (receipt.core.decision !== 'ACCEPTED') throw new Error('Rejected receipt cannot create canonical revision');
+    if (receipt.core.baseRevisionId !== parent.revisionId || receipt.core.baseStateHash !== parent.stateHash) {
+      throw new Error('Receipt parent binding mismatch');
+    }
+    if (receipt.core.previousReceiptCoreHash !== parent.transitionReceiptCoreHash) {
+      throw new Error('Receipt chain continuity rejected');
+    }
+    if (parent.transitionReceiptCoreHash !== null && !receipts.has(parent.transitionReceiptCoreHash)) {
+      throw new Error('Parent receipt evidence is missing');
+    }
+    if (receipt.core.candidateStateHash !== revision.stateHash || receipt.core.independentReplayStateHash !== revision.stateHash) {
+      throw new Error('Receipt resulting state mismatch');
+    }
+    if (receipt.core.kernelVersion !== revision.kernelVersion) throw new Error('Receipt kernel version mismatch');
+
     const currentHead = branchHeads.get(revision.branchId);
     if (currentHead !== undefined && currentHead !== revision.parentRevisionId) throw new Error('Branch head replacement rejected');
-    if (currentHead === undefined && parent.branchId === revision.branchId && parent.revisionId !== revision.parentRevisionId) {
-      throw new Error('Invalid branch ancestry');
-    }
+    if (currentHead === undefined && parent.branchId === revision.branchId) throw new Error('New branch must diverge from another branch identity');
+
     await putRevision(revision, state);
     branchHeads.set(revision.branchId, revision.revisionId);
   };
@@ -93,6 +127,12 @@ export function createInMemoryCanonicalStore() {
 
   const putReceipt = async (receipt: TransitionReceiptEnvelope): Promise<void> => {
     if (await hashCanonical(receipt.core) !== receipt.coreHash) throw new Error('Receipt core hash mismatch');
+    if (receipt.core.previousReceiptCoreHash !== null && !receipts.has(receipt.core.previousReceiptCoreHash)) {
+      const base = revisions.get(receipt.core.baseRevisionId);
+      if (!base || base.transitionReceiptCoreHash !== receipt.core.previousReceiptCoreHash) {
+        throw new Error('Receipt predecessor evidence is missing');
+      }
+    }
     const key = receipt.coreHash;
     const existing = receipts.get(key);
     if (existing && canonicalize(existing.core) !== canonicalize(receipt.core)) throw new Error('Receipt replacement rejected');
