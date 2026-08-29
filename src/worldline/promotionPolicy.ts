@@ -41,3 +41,17 @@ export function promotionBoundaryReason(kind: string): string {
   }
   return 'Only reversible machine-verifiable low-risk rendering or data-normalization candidates may auto-promote.';
 }
+
+export function requiresHumanApprovalForTransition(input: {
+  decisionType: string;
+  mechanismRiskClass: string;
+  executionPolicy: string;
+  epistemicClass: string;
+  ambiguousPolicy: boolean;
+}): boolean {
+  if (input.ambiguousPolicy) return true;
+  if (input.executionPolicy === 'HUMAN_EACH_EXECUTION' || input.executionPolicy !== 'AUTO_LOW_RISK') return true;
+  if (isHumanGatedKind(input.mechanismRiskClass)) return true;
+  if (input.epistemicClass === 'OBSERVED' || input.epistemicClass === 'RECONSTRUCTED') return true;
+  return false;
+}
