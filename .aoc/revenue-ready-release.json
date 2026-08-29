@@ -1,0 +1,50 @@
+{
+  "api_version": "aoc/v1",
+  "kind": "RevenueReadyReleaseEvidence",
+  "policy_id": "POL-REV-001",
+  "policy_version": "1.0.0",
+  "project_id": "worldline-temporal-reality-studio",
+  "release": { "iteration": 1, "candidate": "first-customer-facing-commercial-release", "evaluated_at": "2026-08-29T23:20:00Z" },
+  "decision": "BLOCKED",
+  "criteria": {
+    "specific_buyer": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "A municipal decision-support buyer hypothesis exists but has not been customer-validated.", "validated_at": "2026-08-29T23:20:00Z" },
+    "urgent_problem": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No source-backed customer urgency interview is recorded.", "validated_at": "2026-08-29T23:20:00Z" },
+    "compelling_offer": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "The scenario-analysis product is implemented internally; the commercial offer is not validated.", "validated_at": "2026-08-29T23:20:00Z" },
+    "pricing_model": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Pricing has not been tested with a buyer.", "validated_at": "2026-08-29T23:20:00Z" },
+    "proof": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": ["docs/evidence/2026-08-29-worldline-12-step-verification.json"], "notes": "Software proof exists; independent causal, HIL, municipal and customer proof do not.", "validated_at": "2026-08-29T23:20:00Z" },
+    "customer_source": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No qualified customer list is approved.", "validated_at": "2026-08-29T23:20:00Z" },
+    "acquisition_channel": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No acquisition channel has been validated.", "validated_at": "2026-08-29T23:20:00Z" },
+    "conversion_mechanism": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No sales conversion path has been validated.", "validated_at": "2026-08-29T23:20:00Z" },
+    "payment_infrastructure": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No payment path is configured or verified.", "validated_at": "2026-08-29T23:20:00Z" },
+    "fulfillment_system": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Customer fulfillment and service-level processes are not established.", "validated_at": "2026-08-29T23:20:00Z" },
+    "onboarding": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Customer onboarding is not implemented.", "validated_at": "2026-08-29T23:20:00Z" },
+    "customer_support": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Support ownership and response policy are not established.", "validated_at": "2026-08-29T23:20:00Z" },
+    "retention_mechanism": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Retention evidence is unavailable before a pilot.", "validated_at": "2026-08-29T23:20:00Z" },
+    "expansion_path": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Expansion remains a hypothesis, not demand evidence.", "validated_at": "2026-08-29T23:20:00Z" },
+    "unit_economics": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Delivery cost, margin and support burden are not measured.", "validated_at": "2026-08-29T23:20:00Z" },
+    "measurement": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": ["docs/evidence/2026-08-29-worldline-12-step-verification.json"], "notes": "Engineering measurement exists; commercial and decision-value measurement does not.", "validated_at": "2026-08-29T23:20:00Z" },
+    "legal_operational_basics": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": ["public/data/new-bedford/DATA_SOURCES.md"], "notes": "Source boundaries are documented; customer terms, privacy review and municipal operating agreements are not.", "validated_at": "2026-08-29T23:20:00Z" },
+    "automation": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "A safe customer delivery workflow is not operational.", "validated_at": "2026-08-29T23:20:00Z" },
+    "accountability": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": ["docs/WORLDLINE_TEMPORAL_REALITY_STUDIO_V1.md"], "notes": "Technical authority gates exist; commercial owners and service accountability are not assigned.", "validated_at": "2026-08-29T23:20:00Z" },
+    "continuous_demand_validation": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No recurring customer discovery process is evidenced.", "validated_at": "2026-08-29T23:20:00Z" }
+  },
+  "first_dollar_stack": {
+    "painful_problem": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Requires buyer interviews.", "validated_at": "2026-08-29T23:20:00Z" },
+    "defined_buyer": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "Buyer hypothesis is not validated.", "validated_at": "2026-08-29T23:20:00Z" },
+    "fixed_offer": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No approved fixed pilot offer.", "validated_at": "2026-08-29T23:20:00Z" },
+    "price": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No validated price.", "validated_at": "2026-08-29T23:20:00Z" },
+    "proof_asset": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": ["docs/evidence/2026-08-29-worldline-12-step-verification.json"], "notes": "Internal proof only; no customer proof.", "validated_at": "2026-08-29T23:20:00Z" },
+    "qualified_lead_source": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No qualified lead source.", "validated_at": "2026-08-29T23:20:00Z" },
+    "sales_path": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No approved sales path.", "validated_at": "2026-08-29T23:20:00Z" },
+    "payment_path": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No verified payment path.", "validated_at": "2026-08-29T23:20:00Z" },
+    "fulfillment_path": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "No customer fulfillment path.", "validated_at": "2026-08-29T23:20:00Z" },
+    "direct_outreach_and_follow_up": { "status": "BLOCKED", "owner": "Human Authority", "evidence_refs": [], "notes": "External outreach was not authorized or performed.", "validated_at": "2026-08-29T23:20:00Z" }
+  },
+  "attestations": {
+    "claims_source_backed": true,
+    "no_synthetic_customer_proof": true,
+    "payment_path_verified": false,
+    "paying_demand_verified": false,
+    "human_authority_gates_preserved": true
+  }
+}

@@ -2,7 +2,7 @@ import type { ExperimentSession } from './experiments';
 import type { Intervention } from './interventions';
 import type { WorldlineState } from './types';
 
-export type StudioSurface = 'WORLD' | 'TIME' | 'FUTURES' | 'COMPARE' | 'DATA' | 'LIBRARY';
+export type StudioSurface = 'STUDIO' | 'WORLD' | 'TIME' | 'FUTURES' | 'COMPARE' | 'DATA' | 'LIBRARY';
 
 export interface WorldProject {
   schema: 'worldline-project-v2';
@@ -67,7 +67,7 @@ export function createWorldProject(
     state: structuredClone(state),
     interventions: [],
     experiments: [],
-    preferences: { primarySurface: 'WORLD', truthLens: false },
+    preferences: { primarySurface: 'STUDIO', truthLens: false },
   };
 }
 

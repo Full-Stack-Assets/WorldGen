@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "worldline-municipal-scenario-lab-v1",
+  "worldId": "new-bedford-001",
+  "claimBoundary": "SCENARIO_ANALYSIS_NOT_PREDICTION",
+  "sourceTime": "2023–2026 source package",
+  "simulationTime": "2026–2046 scenario horizon",
+  "spatialReference": "EPSG:4326",
+  "geometryRole": "coverage extent only",
+  "expertReviewRequired": true,
+  "interventions": [
+    { "id": "transit-access-sensitivity", "label": "Transit access sensitivity", "status": "PROPOSED_EXPERT_REVIEW_REQUIRED", "epistemicClass": "SIMULATED" },
+    { "id": "harbor-resilience-sensitivity", "label": "Harbor resilience sensitivity", "status": "PROPOSED_EXPERT_REVIEW_REQUIRED", "epistemicClass": "SIMULATED" }
+  ],
+  "backtestStatus": "NOT_RUN",
+  "sensitivityCalibrationStatus": "NOT_RUN",
+  "limitations": ["No municipal outcome prediction is claimed.", "No expert approval or calibrated policy result is represented.", "Coverage geometry is a reconstructed source-service extent, not parcel geometry."]
+}

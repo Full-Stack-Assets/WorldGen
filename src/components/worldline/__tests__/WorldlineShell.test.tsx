@@ -7,8 +7,8 @@ import { createProviderRegistry, resolveSurfaceProvider } from '../../../worldli
 import { createInitialWorldlineState } from '../../../worldline/state';
 
 describe('Worldline shell', () => {
-  it('exposes the six canonical primary surfaces', () => {
-    expect(NAV_ITEMS).toEqual(['WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY']);
+  it('exposes the Temporal Reality Studio plus six canonical support surfaces', () => {
+    expect(NAV_ITEMS).toEqual(['STUDIO', 'WORLD', 'TIME', 'FUTURES', 'COMPARE', 'DATA', 'LIBRARY']);
   });
 
   it('starts with explicit generated and field labels', () => {
@@ -36,6 +36,8 @@ describe('Worldline shell', () => {
     }));
 
     expect(html).toContain('WORLDLINE STUDIO');
+    expect(html).toContain('Temporal Reality Studio');
+    expect(html).toContain('READ-ONLY PROJECTION');
     expect(html).toContain('aria-label="Worldline Studio project"');
     expect(html).toContain('WORLD');
     expect(html).toContain('FUTURES');

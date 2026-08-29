@@ -1,0 +1,40 @@
+{
+  "schema": "worldline-implementation-verification-v1",
+  "workItem": "Worldline 4D Temporal Reality Studio v1 — 12-step implementation",
+  "evaluatedAt": "2026-08-29T23:20:00Z",
+  "repository": "WorldGen",
+  "branch": "codex/worldline-temporal-reality-studio-v1",
+  "baseCommit": "a26e8ab52e42f5907a2ecebb4046642dc7ff0f5f",
+  "donors": [
+    { "repository": "Temporal-Drift", "commit": "11351c5331f46ceea85983b32a321424e13f838e", "role": "deterministic causal-kernel donor" },
+    { "repository": "Po", "role": "checkpoint, approval, verifier and budget donor" },
+    { "repository": "HostGraph-Procurement-Command-Center", "role": "cost-aware COO routing donor" },
+    { "repository": "SelfLLM", "role": "champion retention and rollback concept donor; no weight self-training integration" }
+  ],
+  "gates": {
+    "unitAndIntegrationTests": { "status": "PASS", "testFiles": 93, "tests": 288, "command": "npm test" },
+    "deterministicSeedCases": { "status": "PASS", "cases": 10000, "prng": "xoshiro128**" },
+    "typecheck": { "status": "PASS", "command": "npm run typecheck" },
+    "productionBuild": { "status": "PASS", "command": "npm run build", "bundler": "Vite 6.4.3", "pwa": "generated" },
+    "newBedfordPackage": { "status": "PASS", "command": "npm run validate:new-bedford", "sources": 4, "snapshots": 3, "geometryFeatures": 1, "crs": "EPSG:4326", "claimBoundary": "SCENARIO_ANALYSIS_NOT_PREDICTION" },
+    "diffCheck": { "status": "PASS", "command": "git diff --check" }
+  },
+  "implementedSteps": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+  "authority": {
+    "sandboxCanonicalWrite": "DENIED",
+    "generatedHarnessExecution": "COMPILE_AND_EVALUATE_ONLY",
+    "mechanismPromotion": "HUMAN_REQUIRED",
+    "municipalIntervention": "EXPERT_REVIEW_REQUIRED",
+    "physicalActuation": "NOT_AUTHORIZED",
+    "productionDeploy": "NOT_PERFORMED",
+    "merge": "NOT_PERFORMED"
+  },
+  "limitations": [
+    "No external held-out CausalBench result has been produced.",
+    "Synthetic and robotic validations are internal fixtures/simulator paths, not physical evidence.",
+    "No HIL or hardware run has been performed.",
+    "New Bedford output is uncalibrated scenario analysis; expert review, sensitivity calibration and back-testing are not run.",
+    "No customer, payment, revenue or production readiness claim is made."
+  ],
+  "decision": "INTERNAL_IMPLEMENTATION_VERIFIED__HUMAN_AUTHORITY_REQUIRED_FOR_MERGE_DEPLOY_PHYSICAL_OR_COMMERCIAL_ACTION"
+}

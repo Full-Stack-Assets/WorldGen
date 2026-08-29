@@ -1,33 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import { projectFutureLandscape } from '../futureLandscape';
-import { createBranch, createInitialWorldlineState } from '../state';
+import { createBranchThroughKernel } from '../causal/builtinMechanisms';
+import { createInitialWorldlineState } from '../state';
 
 describe('Future Landscape', () => {
-  const buildBranches = () => {
+  const buildBranches = async () => {
     const base = createInitialWorldlineState();
-    const first = createBranch(base, { label: 'Adaptive', atYear: 2030 });
-    const second = createBranch({ ...first, activeBranchId: 'branch-root' }, { label: 'Constraint', atYear: 2030 });
-    return Object.values(second.branches);
+    const first = await createBranchThroughKernel(base, { label: 'Adaptive', atYear: 2030 });
+    const second = await createBranchThroughKernel({ ...first.state, activeBranchId: 'branch-root' }, { label: 'Constraint', atYear: 2030 });
+    return Object.values(second.state.branches);
   };
 
-  it('projects identical input deterministically', () => {
-    const branches = buildBranches();
+  it('projects identical input deterministically', async () => {
+    const branches = await buildBranches();
     expect(projectFutureLandscape(branches)).toEqual(projectFutureLandscape(branches));
   });
 
-  it('is independent of input branch order', () => {
-    const branches = buildBranches();
+  it('is independent of input branch order', async () => {
+    const branches = await buildBranches();
     expect(projectFutureLandscape([...branches].reverse())).toEqual(projectFutureLandscape(branches));
   });
 
-  it('keeps root divergence at zero and diverged branches positive', () => {
-    const points = projectFutureLandscape(buildBranches());
+  it('keeps root divergence at zero and diverged branches positive', async () => {
+    const points = projectFutureLandscape(await buildBranches());
     expect(points.find((point) => point.branchId === 'branch-root')?.divergence).toBe(0);
     expect(points.filter((point) => point.branchId !== 'branch-root').some((point) => point.divergence > 0)).toBe(true);
   });
 
-  it('keeps every coordinate inside the normalized landscape', () => {
-    for (const point of projectFutureLandscape(buildBranches())) {
+  it('keeps every coordinate inside the normalized landscape', async () => {
+    for (const point of projectFutureLandscape(await buildBranches())) {
       expect(point.x).toBeGreaterThanOrEqual(0);
       expect(point.x).toBeLessThanOrEqual(100);
       expect(point.y).toBeGreaterThanOrEqual(0);

@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "validate:new-bedford": "node scripts/validate-new-bedford.mjs",
+    "verify:trust": "vite-node --script scripts/verify-worldgen-trust.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

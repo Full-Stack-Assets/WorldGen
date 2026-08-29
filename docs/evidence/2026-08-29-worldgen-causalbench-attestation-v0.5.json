@@ -1,0 +1,175 @@
+{
+  "schema": "worldgen-causalbench-attestation-verification-v1",
+  "workItemId": "WI-WORLDGEN-CAUSALBENCH-ATTESTATION-HIDDEN-EVAL-2026-08-29",
+  "workItem": "WorldGen CausalBench Attestation + Hidden Evaluation v0.5",
+  "evaluatedAt": "2026-08-29T16:47:12Z",
+  "repository": {
+    "name": "WorldGen",
+    "remote": "https://github.com/Full-Stack-Assets/WorldGen.git",
+    "branch": "codex/worldgen-causalbench-attestation-v0.5",
+    "implementationCommit": "d53fa27b00d0205808508635565614889cd429fe",
+    "implementationTree": "8dc103434402c7730ecb1207c0495c07f07bd8b3",
+    "pushed": false,
+    "merged": false
+  },
+  "lineage": {
+    "upstreamMain": "a26e8ab52e42f5907a2ecebb4046642dc7ff0f5f",
+    "localV04Checkpoint": "6befed55bb56203967b65f632220f62990f74373",
+    "upstreamCausalKernelHardeningTip": "c2cfd34464db66ba3f5f75e25608a0cef0eb58fe",
+    "reconciliation": "The local TypeScript checkpoint was extended with the upstream causal-kernel hardening commits and then advanced with attestation, hidden evaluation, locked promotion evidence, replay import, and trust verification. No competing implementation was silently merged."
+  },
+  "sourceReconciliation": {
+    "expectedArchive": {
+      "name": "WorldGen-causalbench-v0.4.zip",
+      "expectedSha256": "5816e3c50095108b96d59056c10e268f74100bc715582dd8098a0ae8e34cc049",
+      "status": "NOT_PRESENT_IN_SUPPLIED_FILES"
+    },
+    "suppliedReferences": [
+      {
+        "name": "first-synthetic-century-v5-verification.md",
+        "sha256": "59de00b8a39bbee084409f652334cbc751d083c41559398bb0b8e0c05fd70fef",
+        "disposition": "LEGACY_ADVERSARIAL_REFERENCE"
+      },
+      {
+        "name": "first-synthetic-century-kernel-review.md",
+        "sha256": "624a6634cd1eb7a45e6cbb69fb57e0e24085e9d24fa889792f57007ddbc24558",
+        "disposition": "LEGACY_ADVERSARIAL_REFERENCE"
+      },
+      {
+        "name": "files-b796375b 7.zip",
+        "sha256": "440e72a92ed1311f87bb26628d89a409d4577b0e6d1aa1b06ef7f39188f33e1f",
+        "disposition": "LEGACY_PYTHON_ARCHIVE_NOT_CANONICAL"
+      },
+      {
+        "name": "worldline-v0.1-repair-brief.md",
+        "sha256": "1a45384bddf7e3dbf0da8e70187bf1fa997e40cffb951627a24fc0e38053c654",
+        "disposition": "LEGACY_REPAIR_REFERENCE"
+      },
+      {
+        "name": "World Gen.zip",
+        "sha256": "271bcfc7a96ad204cae4922c45c446b374194f2e59014bdfd17de7a095ecb3be",
+        "disposition": "LEGACY_PYTHON_ARCHIVE_NOT_CANONICAL"
+      }
+    ]
+  },
+  "buildGraphPreflight": {
+    "payloadHash": "3c2c323ff4133c7f0919c85e490c4bf3284ccd657e69836da88c6bbad1ea37e7",
+    "registryDecision": "CREATE_NEW",
+    "decisionOverride": "EXTEND_EXISTING",
+    "overrideReason": "The supplied canonical Git repository and explicit work instruction established an existing WorldGen project; creating a duplicate would contradict repository evidence.",
+    "registrationStatus": "OPEN_HUMAN_PROJECT_CONTROL_FOLLOW_UP"
+  },
+  "implementedControls": {
+    "receiptSchema": "worldgen-causalbench-evaluation-receipt-v1",
+    "receiptCanonicalization": "SHA256(canonical(receiptCore))",
+    "attestationSchema": "worldgen-causalbench-evaluator-attestation-v1",
+    "attestationAlgorithm": "Ed25519",
+    "exactBindings": [
+      "candidate identity",
+      "input state",
+      "proposal",
+      "resulting state",
+      "suite and hidden-suite identity",
+      "evaluator configuration and policy",
+      "runtime isolation and dependency lock",
+      "authority request and decision"
+    ],
+    "newBedfordHiddenPivotalRules": 8,
+    "adversarialWorldIntegrityCategories": 10,
+    "promotionPolicy": "ATTESTED_LOCKED_EVALUATION_THEN_HUMAN_AUTHORITY",
+    "globalModelScore": "NOT_IMPLEMENTED_BY_DESIGN",
+    "faithfulnessMap": "REGIME_TASK_CAPABILITY_COMPLEXITY_CONDITIONED"
+  },
+  "gates": {
+    "dependencyInstall": {
+      "status": "PASS",
+      "command": "npm ci --no-audit --no-fund",
+      "packagesAdded": 524,
+      "dependencyLockHash": "sha256:6a0216bcb9b5baa4c7f331e14ad1d8106ff6fabf0c6672c4a84944be3564bdad",
+      "auditPerformed": false
+    },
+    "typecheck": {
+      "status": "PASS",
+      "command": "npm run typecheck"
+    },
+    "unitAndIntegrationTests": {
+      "status": "PASS",
+      "command": "npm test",
+      "testFiles": 98,
+      "tests": 318
+    },
+    "productionBuild": {
+      "status": "PASS",
+      "command": "npm run build",
+      "bundler": "Vite 6.4.3",
+      "modulesTransformed": 775,
+      "pwa": "GENERATED"
+    },
+    "newBedfordPackage": {
+      "status": "PASS",
+      "command": "npm run validate:new-bedford",
+      "worldId": "new-bedford-001",
+      "sources": 4,
+      "snapshots": 3,
+      "geometryFeatures": 1,
+      "crs": "EPSG:4326",
+      "claimBoundary": "SCENARIO_ANALYSIS_NOT_PREDICTION"
+    },
+    "trustVerification": {
+      "status": "PASS",
+      "command": "npm run verify:trust",
+      "crossProcessDeterminism": true,
+      "branchId": "branch-0d67bd0230475ff4c8da0ac7754ec190e2c2e9c418bf413cf71243fcb401dea0",
+      "transitionReceiptHash": "sha256:1850ed1186e7abbe26cf1d3e2361c200410f2282f3ec2bb42825b75051059398",
+      "revisionId": "revision:12d1426e352d4af1c4280bc4b93cd0830f5bf2a0e68e004f097783e6012a89fa",
+      "canonicalStateHash": "sha256:160a9b2be9da3bd7ee385f8a36a46525c3cb8020743c335def88f5cd68df7a95",
+      "hiddenSuiteIdentifier": "sha256:076b6460f817917c58611378d0f7185b72f4726c2ddb4c528ab036a389bb8b41",
+      "implicitRandomnessViolations": [],
+      "canonicalMutationBypassExports": [],
+      "hiddenSuiteSurface": ["descriptor", "evaluate"]
+    },
+    "runGraphRoundTrip": {
+      "status": "PASS",
+      "evidence": "causalRunGraph.test.ts verifies the hash chain, imports into a fresh store, and requires byte-identical re-export"
+    },
+    "attestedPromotion": {
+      "status": "PASS",
+      "evidence": "causalBenchPromotion.test.ts verifies exact signed evidence and the unconfigured fail-closed path"
+    },
+    "diffCheck": {
+      "status": "PASS",
+      "command": "git diff --check"
+    }
+  },
+  "releaseGateAssessment": {
+    "cleanInstallTypecheckTestsBuild": "PASS",
+    "freshProcessDeterminism": "PASS_INTERNAL",
+    "branchIsolationAndSharedAncestry": "PASS_INTERNAL",
+    "completeRunGraphHashChainReplay": "PASS_INTERNAL",
+    "explicitDeterministicStreams": "PASS_INTERNAL",
+    "noModelCanonicalMutationApi": "PASS_INTERNAL",
+    "hiddenEvaluatorIsolation": "PARTIAL_REQUIRES_PRODUCTION_SERVICE_AND_CANDIDATE_SANDBOX",
+    "attestedReceiptRequiredForPromotion": "PASS_INTERNAL",
+    "unsupportedMechanismAbstention": "PASS_REFERENCE_SUITES",
+    "epistemicClassPreservation": "PASS_EXISTING_INTERNAL_TESTS"
+  },
+  "authority": {
+    "lockedEvaluatorOutcome": "ELIGIBLE_FOR_HUMAN_REVIEW_ONLY",
+    "canonicalMutation": "NOT_PERFORMED",
+    "mechanismPromotion": "HUMAN_AUTHORITY_REQUIRED",
+    "productionDeploy": "NOT_PERFORMED",
+    "merge": "NOT_PERFORMED",
+    "push": "NOT_PERFORMED",
+    "externalModelRuns": "NOT_PERFORMED"
+  },
+  "limitations": [
+    "The expected v0.4 archive was not supplied, so byte-for-byte archive reconciliation was impossible; reconciliation used Git lineage and the local TypeScript checkpoint.",
+    "Production evaluator service isolation, candidate sandboxing, private held-out case storage, signing-key custody, rotation, and revocation are not provisioned in this repository.",
+    "Reference hidden-rule definitions are present in the source checkout; production held-out cases must be deployed outside any filesystem visible to proposal agents.",
+    "No external frontier-model qualification run or calibrated faithfulness probability has been produced.",
+    "The dependency install used --no-audit and emitted deprecation/security-support warnings; no dependency security audit claim is made.",
+    "BuildGraph/Canon registration remains open.",
+    "No scientific validation, municipal expert approval, customer proof, deployment, merge, or production-readiness claim is made."
+  ],
+  "decision": "INTERNAL_IMPLEMENTATION_VERIFIED__NOT_PRODUCTION_READY__HUMAN_AUTHORITY_REQUIRED_FOR_PUSH_MERGE_DEPLOY_OR_PROMOTION"
+}
