@@ -56,6 +56,9 @@ export interface TransitionMechanismArtifact {
   seedPolicy: 'NONE' | 'EXPLICIT';
   invariantSuiteRefs: readonly string[];
   riskClass: string;
+  reversible: boolean;
+  machineVerifiable: boolean;
+  automaticExecutionAllowed: boolean;
   promotionStatus: MechanismPromotionStatus;
   approvalReceiptId?: string;
   program: unknown;
@@ -71,6 +74,8 @@ export interface TransitionProposal {
   seed: string | null;
   producerId: string;
   causalClaims: readonly CausalReference[];
+  targetBranchId?: string;
+  simulationTime?: number;
 }
 
 export interface GateResult {
