@@ -11,7 +11,7 @@ export function normalizeCanonical(value: unknown): unknown {
     const proto = Object.getPrototypeOf(value);
     if (proto !== Object.prototype && proto !== null) throw new Error('Unsupported canonical object');
     return Object.fromEntries(Object.entries(value as Record<string, unknown>)
-      .sort(([left], [right]) => left.localeCompare(right))
+      .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
       .map(([key, item]) => {
         if (item === undefined || typeof item === 'function' || typeof item === 'symbol') {
           throw new Error('Unsupported canonical value');
