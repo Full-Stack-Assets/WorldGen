@@ -1,12 +1,13 @@
 import { hashCanonical, normalizeCanonical, type Sha256Digest } from './canonicalJson';
-import { evaluateMechanismExecutionPolicy } from './policy';
+import { evaluateInvariantSuite } from './invariants';
+import { evaluateMechanismExecutionPolicy, validateEpistemicTransition } from './policy';
 import type { createInMemoryCanonicalStore } from './store';
 import { executeTransitionIr, validateTransitionIr, type TransitionIrProgram } from './transitionIr';
 import type {
   CanonicalRevision,
   CausalReference,
   GateResult,
-  InvariantResult,
+  TransitionMechanismArtifact,
   TransitionProposal,
   TransitionReceiptCore,
   TransitionReceiptEnvelope,
@@ -65,6 +66,7 @@ function requireInputs(value: unknown): Record<string, unknown> {
 
 async function createChildRevision(input: {
   base: CanonicalRevision;
+  mechanism: TransitionMechanismArtifact;
   proposal: TransitionProposal;
   candidateStateHash: Sha256Digest;
   receiptCoreHash: Sha256Digest;
@@ -79,7 +81,7 @@ async function createChildRevision(input: {
     stateSchema: input.base.stateSchema,
     stateHash: input.candidateStateHash,
     transitionReceiptCoreHash: input.receiptCoreHash,
-    epistemicClass: input.base.epistemicClass,
+    epistemicClass: input.mechanism.epistemicCeiling,
     kernelVersion: input.base.kernelVersion,
   };
   const digest = await hashCanonical(deterministic);
@@ -109,6 +111,24 @@ export async function executeCandidate(store: CanonicalStore, proposal: Transiti
   const inputs = requireInputs(proposal.normalizedInputs);
   const candidateState = executeTransitionIr(baseState, program, inputs);
   const candidateStateHash = await hashCanonical(candidateState);
+
+  const invariants = evaluateInvariantSuite(mechanism.invariantSuiteRefs, {
+    baseState,
+    candidateState,
+    proposal,
+    mechanism,
+  });
+  const invariantsPassed = invariants.every((result) => result.passed);
+
+  let epistemicPassed = true;
+  let epistemicDetail = `Transition remains within ${mechanism.epistemicCeiling} epistemic authority.`;
+  try {
+    validateEpistemicTransition({ from: base.epistemicClass, to: mechanism.epistemicCeiling });
+  } catch (error) {
+    epistemicPassed = false;
+    epistemicDetail = error instanceof Error ? error.message : 'Epistemic transition rejected';
+  }
+
   const replayState = await verifier.replay({
     baseState: structuredClone(baseState),
     program: structuredClone(program),
@@ -116,7 +136,8 @@ export async function executeCandidate(store: CanonicalStore, proposal: Transiti
   });
   const independentReplayStateHash = await hashCanonical(replayState);
   const replayMatched = candidateStateHash === independentReplayStateHash;
-  const decision = replayMatched ? evaluateMechanismExecutionPolicy({
+  const verificationPassed = replayMatched && invariantsPassed && epistemicPassed;
+  const decision = verificationPassed ? evaluateMechanismExecutionPolicy({
     sourceType: mechanism.sourceType,
     promotionStatus: mechanism.promotionStatus,
     riskClass: mechanism.riskClass,
@@ -133,6 +154,10 @@ export async function executeCandidate(store: CanonicalStore, proposal: Transiti
     replayState,
     independentReplayStateHash,
     replayMatched,
+    invariants,
+    invariantsPassed,
+    epistemicPassed,
+    epistemicDetail,
     decision,
   };
 }
@@ -152,6 +177,7 @@ async function createPreExecutionReceipt(
     schema: 'worldline-transition-receipt-v1',
     baseRevisionId: base.revisionId,
     baseStateHash: base.stateHash,
+    previousReceiptCoreHash: base.transitionReceiptCoreHash,
     mechanismId: mechanism.mechanismId,
     mechanismHash: mechanism.contentHash,
     proposalId: proposal.proposalId,
@@ -176,7 +202,7 @@ async function createPreExecutionReceipt(
   };
   const coreHash = await hashCanonical(core);
   const receipt: TransitionReceiptEnvelope = { core, coreHash };
-  store.putReceipt(receipt);
+  await store.putReceipt(receipt);
   return receipt;
 }
 
@@ -207,14 +233,14 @@ export async function admitTransition(store: CanonicalStore, proposal: Transitio
     gate('base-current', true, 'Proposal is bound to the current branch head.'),
     gate('mechanism-approved', execution.mechanism.promotionStatus === 'APPROVED_EXECUTABLE', 'Mechanism promotion status checked.'),
     gate('replay-match', execution.replayMatched, execution.replayMatched ? 'Independent replay matched candidate hash.' : 'Independent replay hash mismatch.'),
-  ];
-  const invariants: InvariantResult[] = [
-    { id: 'parent-immutable', passed: true, detail: 'Execution used a detached base-state clone.' },
+    gate('invariants', execution.invariantsPassed, execution.invariantsPassed ? 'All trusted invariant suites passed.' : 'One or more trusted invariants failed.'),
+    gate('epistemic', execution.epistemicPassed, execution.epistemicDetail),
   ];
   const core: TransitionReceiptCore = {
     schema: 'worldline-transition-receipt-v1',
     baseRevisionId: execution.base.revisionId,
     baseStateHash: execution.base.stateHash,
+    previousReceiptCoreHash: execution.base.transitionReceiptCoreHash,
     mechanismId: execution.mechanism.mechanismId,
     mechanismHash: execution.mechanism.contentHash,
     proposalId: proposal.proposalId,
@@ -225,7 +251,7 @@ export async function admitTransition(store: CanonicalStore, proposal: Transitio
     declaredReadSet: [...execution.mechanism.readSet],
     declaredWriteSet: [...execution.mechanism.writeSet],
     gates,
-    invariants,
+    invariants: execution.invariants,
     candidateStateHash: execution.candidateStateHash,
     independentReplayStateHash: execution.independentReplayStateHash,
     verifierId: verifier.verifierId,
@@ -235,14 +261,15 @@ export async function admitTransition(store: CanonicalStore, proposal: Transitio
   };
   const coreHash = await hashCanonical(core);
   const receipt: TransitionReceiptEnvelope = { core, coreHash };
-  store.putReceipt(receipt);
+  await store.putReceipt(receipt);
   if (execution.decision !== 'ACCEPTED') return { decision: execution.decision, receipt };
   const revision = await createChildRevision({
     base: execution.base,
+    mechanism: execution.mechanism,
     proposal,
     candidateStateHash: execution.candidateStateHash,
     receiptCoreHash: coreHash,
   });
-  store.appendRevision(revision, execution.candidateState);
+  await store.appendRevision(revision, execution.candidateState);
   return { decision: 'ACCEPTED', receipt, revision };
 }
