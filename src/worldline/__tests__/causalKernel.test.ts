@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { hashCanonical } from '../causal/canonicalJson';
 import { admitTransition, createTransitionProposal, verifyReceiptCoreHash } from '../causal/kernel';
+import { computeMechanismContentHash } from '../causal/mechanismIdentity';
 import { createGenesisRevision, createInMemoryCanonicalStore } from '../causal/store';
 import { executeTransitionIr, type TransitionIrProgram } from '../causal/transitionIr';
-import type { MechanismPromotionStatus } from '../causal/types';
+import type { MechanismPromotionStatus, TransitionMechanismArtifact } from '../causal/types';
 
 async function createCausalKernelFixture(promotionStatus: MechanismPromotionStatus = 'APPROVED_EXECUTABLE') {
   const store = createInMemoryCanonicalStore();
@@ -17,20 +17,15 @@ async function createCausalKernelFixture(promotionStatus: MechanismPromotionStat
     kernelVersion: 'causal-kernel-v1',
     state,
   });
-  store.putGenesis(genesis, state);
+  await store.putGenesis(genesis, state);
   const program: TransitionIrProgram = {
     version: 'TRANSITION_IR_V1',
     operations: [{ op: 'INCREMENT', path: '/metrics/population', value: { input: 'delta' } }],
   };
-  const contentHash = await hashCanonical({
-    program,
-    readSet: ['/metrics/population'],
-    writeSet: ['/metrics/population'],
-  });
-  store.putMechanism({
+  const mechanism: TransitionMechanismArtifact = {
     schema: 'worldline-transition-mechanism-v1',
     mechanismId: 'population-delta-v1',
-    contentHash,
+    contentHash: 'sha256:pending',
     sourceType: 'HUMAN_AUTHORED',
     producerId: 'producer:human',
     executorKind: 'TRANSITION_IR_V1',
@@ -48,7 +43,9 @@ async function createCausalKernelFixture(promotionStatus: MechanismPromotionStat
     promotionStatus,
     approvalReceiptId: 'approval:population-delta-v1',
     program,
-  });
+  };
+  mechanism.contentHash = await computeMechanismContentHash(mechanism);
+  await store.putMechanism(mechanism);
   const verifier = {
     verifierId: 'verifier:independent',
     configDigest: 'sha256:verifier' as const,
@@ -71,15 +68,33 @@ async function proposeDelta(fixture: Awaited<ReturnType<typeof createCausalKerne
 }
 
 describe('causal kernel admission', () => {
-  it('admits only a replay-identical transition and preserves lineage', async () => {
+  it('admits only a replay-identical transition and preserves receipt lineage', async () => {
     const fixture = await createCausalKernelFixture();
     const proposal = await proposeDelta(fixture);
     const result = await admitTransition(fixture.store, proposal, fixture.verifier);
     expect(result.decision).toBe('ACCEPTED');
     expect(result.receipt.core.candidateStateHash).toBe(result.receipt.core.independentReplayStateHash);
+    expect(result.receipt.core.previousReceiptCoreHash).toBeNull();
     expect(result.revision?.parentRevisionId).toBe(fixture.genesis.revisionId);
     expect(result.revision?.transitionReceiptCoreHash).toBe(result.receipt.coreHash);
     expect(await verifyReceiptCoreHash(result.receipt.core, result.receipt.coreHash)).toBe(true);
+  });
+
+  it('chains a second accepted receipt to the first transition receipt', async () => {
+    const fixture = await createCausalKernelFixture();
+    const firstProposal = await proposeDelta(fixture);
+    const first = await admitTransition(fixture.store, firstProposal, fixture.verifier);
+    expect(first.revision).toBeDefined();
+    const secondProposal = await createTransitionProposal({
+      baseRevisionId: first.revision!.revisionId,
+      mechanismId: 'population-delta-v1',
+      inputs: { delta: 1 },
+      producerId: 'producer:agent',
+    });
+    const second = await admitTransition(fixture.store, secondProposal, fixture.verifier);
+    expect(second.decision).toBe('ACCEPTED');
+    expect(second.receipt.core.previousReceiptCoreHash).toBe(first.receipt.coreHash);
+    expect(second.revision?.parentRevisionId).toBe(first.revision?.revisionId);
   });
 
   it('stores a rejected receipt and creates no revision when independent replay mismatches', async () => {
