@@ -17,6 +17,13 @@ export interface GenesisRevisionInput {
   state: unknown;
 }
 
+export interface CanonicalStoreOptions {
+  verifyMechanismApproval?: (input: {
+    mechanism: TransitionMechanismArtifact;
+    approvalReceiptId: string;
+  }) => boolean | Promise<boolean>;
+}
+
 function revisionPayload(revision: CanonicalRevision): Omit<CanonicalRevision, 'revisionId'> {
   const { revisionId: _revisionId, ...payload } = revision;
   return payload;
@@ -46,7 +53,7 @@ export async function createGenesisRevision(input: GenesisRevisionInput): Promis
   return { ...deterministic, revisionId: `revision:${digest.slice('sha256:'.length)}` };
 }
 
-export function createInMemoryCanonicalStore() {
+export function createInMemoryCanonicalStore(options: CanonicalStoreOptions = {}) {
   const revisions = new Map<string, CanonicalRevision>();
   const states = new Map<string, unknown>();
   const stateCanonical = new Map<string, string>();
@@ -120,9 +127,34 @@ export function createInMemoryCanonicalStore() {
 
   const putMechanism = async (mechanism: TransitionMechanismArtifact): Promise<void> => {
     if (!await verifyMechanismContentHash(mechanism)) throw new Error('Mechanism content hash mismatch');
+    if (mechanism.sourceType !== 'HUMAN_AUTHORED' && mechanism.promotionStatus === 'APPROVED_EXECUTABLE') {
+      throw new Error('Non-human mechanism requires trusted promotion');
+    }
     const existing = mechanisms.get(mechanism.mechanismId);
     if (existing && canonicalize(existing) !== canonicalize(mechanism)) throw new Error('Mechanism replacement rejected');
     if (!existing) mechanisms.set(mechanism.mechanismId, structuredClone(mechanism));
+  };
+
+  const promoteMechanism = async (mechanismId: string, approvalReceiptId: string): Promise<TransitionMechanismArtifact> => {
+    const mechanism = mechanisms.get(mechanismId);
+    if (!mechanism) throw new Error('Unknown mechanism');
+    if (mechanism.promotionStatus === 'RETIRED' || mechanism.promotionStatus === 'REJECTED') {
+      throw new Error('Mechanism cannot be promoted from terminal status');
+    }
+    if (mechanism.sourceType === 'HUMAN_AUTHORED' && mechanism.promotionStatus === 'APPROVED_EXECUTABLE') {
+      return structuredClone(mechanism);
+    }
+    if (!approvalReceiptId.trim()) throw new Error('Mechanism promotion requires approval receipt');
+    if (!options.verifyMechanismApproval) throw new Error('Trusted mechanism approval verifier is unavailable');
+    const approved = await options.verifyMechanismApproval({ mechanism: structuredClone(mechanism), approvalReceiptId });
+    if (!approved) throw new Error('Mechanism approval verification failed');
+    const promoted: TransitionMechanismArtifact = {
+      ...structuredClone(mechanism),
+      promotionStatus: 'APPROVED_EXECUTABLE',
+      approvalReceiptId,
+    };
+    mechanisms.set(mechanismId, promoted);
+    return structuredClone(promoted);
   };
 
   const putReceipt = async (receipt: TransitionReceiptEnvelope): Promise<void> => {
@@ -160,5 +192,16 @@ export function createInMemoryCanonicalStore() {
     return value ? structuredClone(value) : null;
   };
 
-  return { putGenesis, appendRevision, putMechanism, putReceipt, getRevision, getStateByHash, getBranchHead, getMechanism, getReceipt };
+  return {
+    putGenesis,
+    appendRevision,
+    putMechanism,
+    promoteMechanism,
+    putReceipt,
+    getRevision,
+    getStateByHash,
+    getBranchHead,
+    getMechanism,
+    getReceipt,
+  };
 }
