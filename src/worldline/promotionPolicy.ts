@@ -31,8 +31,12 @@ export function isAutoPromoteEligible(input: {
   return (AUTO_PROMOTE_KINDS as readonly string[]).includes(input.kind);
 }
 
+export function isHumanGatedKind(kind: string): boolean {
+  return (HUMAN_GATED_KINDS as readonly string[]).includes(kind);
+}
+
 export function promotionBoundaryReason(kind: string): string {
-  if ((HUMAN_GATED_KINDS as readonly string[]).includes(kind)) {
+  if (isHumanGatedKind(kind)) {
     return 'Architecture, policy, model, benchmark, and scientific-claim changes remain human-gated.';
   }
   return 'Only reversible machine-verifiable low-risk rendering or data-normalization candidates may auto-promote.';
