@@ -94,6 +94,7 @@ export interface TransitionReceiptCore {
   schema: 'worldline-transition-receipt-v1';
   baseRevisionId: string;
   baseStateHash: Sha256Digest;
+  previousReceiptCoreHash: Sha256Digest | null;
   mechanismId: string;
   mechanismHash: Sha256Digest;
   proposalId: string;
